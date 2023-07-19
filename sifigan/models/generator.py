@@ -13,6 +13,7 @@ References:
 """
 
 from logging import getLogger
+from typing import List
 
 import torch
 import torch.nn as nn
@@ -446,7 +447,7 @@ class SiFiGANGenerator(nn.Module):
         # reset parameters
         self.reset_parameters()
 
-    def forward(self, x, c, d):
+    def forward(self, x: torch.Tensor, c: torch.Tensor, d: List[torch.Tensor]):
         """Calculate forward propagation.
 
         Args:
