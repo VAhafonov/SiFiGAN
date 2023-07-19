@@ -264,7 +264,7 @@ class SiFiGANGenerator(nn.Module):
         upsample_kernel_sizes=(10, 8, 6, 4),
         source_network_params={
             "resblock_kernel_size": 3,  # currently only 3 is supported.
-            "resblock_dilations": [(1), (1, 2), (1, 2, 4), (1, 2, 4, 8)],
+            "resblock_dilations": [[1], [1, 2], [1, 2, 4], [1, 2, 4, 8]],
             "use_additional_convs": True,
         },
         filter_network_params={
