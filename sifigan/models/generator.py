@@ -17,7 +17,7 @@ from typing import List
 
 import torch
 import torch.nn as nn
-from sifigan.layers import AdaptiveResidualBlock, Conv1d, ResidualBlock
+from sifigan.layers import AdaptiveResidualBlock, Conv1d, ResidualBlock, ModuleInterface, ModuleInterfaceTwoInput
 
 # A logger for this file
 logger = getLogger(__name__)
@@ -308,6 +308,7 @@ class SiFiGANGenerator(nn.Module):
         self.num_upsamples = len(upsample_kernel_sizes)
         self.source_network_params = source_network_params
         self.filter_network_params = filter_network_params
+        self.num_proc_blocks = len(filter_network_params["resblock_kernel_sizes"])
         self.share_upsamples = share_upsamples
         self.share_downsamples = share_downsamples
         self.sn = nn.ModuleDict()
@@ -467,33 +468,37 @@ class SiFiGANGenerator(nn.Module):
         x = self.sn["emb"](x)
         embs = [x]
         for i in range(self.num_upsamples - 1):
-            x = self.sn["downsamples"][i](x)
+            submodule_down: ModuleInterface = self.sn["downsamples"][i]
+            x = submodule_down.forward(x)
             embs += [x]
-        for i in range(self.num_upsamples):
+        for i, layer in enumerate(self.sn["blocks"]):
             # excitation generation network
-            e = self.sn["upsamples"][i](e) + embs[-i - 1]
-            e = self.sn["blocks"][i](e, d[i])
+            submodule_up: ModuleInterface = self.sn["upsamples"][i]
+            e = submodule_up.forward(e) + embs[-i - 1]
+            e = layer(e, d[i])
         e_ = self.sn["output_conv"](e)
 
         # filter-network forward
         embs = [e]
         for i in range(self.num_upsamples - 1):
-            if self.share_downsamples:
-                e = self.sn["downsamples"][i](e)
-            else:
-                e = self.fn["downsamples"][i](e)
+            # if self.share_downsamples:
+            #     e = self.sn["downsamples"][i](e)
+            # else:
+            submodule_down: ModuleInterface = self.fn["downsamples"][i]
+            e = submodule_down.forward(e)
             embs += [e]
-        num_blocks = len(self.filter_network_params["resblock_kernel_sizes"])
         for i in range(self.num_upsamples):
             # resonance filtering network
-            if self.share_upsamples:
-                c = self.sn["upsamples"][i](c) + embs[-i - 1]
-            else:
-                c = self.fn["upsamples"][i](c) + embs[-i - 1]
-            cs = 0.0  # initialize
-            for j in range(num_blocks):
-                cs += self.fn["blocks"][i * num_blocks + j](c)
-            c = cs / num_blocks
+            # if self.share_upsamples:
+            #     c = self.sn["upsamples"][i](c) + embs[-i - 1]
+            # else:
+            submodule1_up: ModuleInterface = self.fn["upsamples"][i]
+            c = submodule1_up.forward(c) + embs[-i - 1]
+            cs = torch.zeros(c.shape, dtype=c.dtype, device=c.device)  # initialize
+            for j in range(self.num_proc_blocks):
+                submodule_fn_block: ModuleInterface = self.fn["blocks"][i * self.num_proc_blocks + j]
+                cs += submodule_fn_block.forward(c)
+            c = cs / self.num_proc_blocks
         c = self.fn["output_conv"](c)
 
         return c, e_
