@@ -39,7 +39,8 @@ def pd_indexing(x: torch.Tensor, d: torch.Tensor, dilation: int):
     idxF[overflowed] = -(idxF[overflowed] % T)
     idxF_idx = (batch_index, ch_index, idxF)
 
-    return x[list(idxP_idx)], x[list(idxF_idx)]
+    # return x[list(idxP_idx)], x[list(idxF_idx)]
+    return x[[idx.tolist() for idx in list(idxP_idx)]], x[[idx.tolist() for idx in list(idxF_idx)]]
 
 
 def index_initial(n_batch, n_ch, tensor=True):
