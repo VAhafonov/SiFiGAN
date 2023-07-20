@@ -1,0 +1,32 @@
+name: "sifigan"
+platform: "pytorch_libtorch"
+max_batch_size: 1
+input[
+{
+    name: "INPUT__0"
+    data_type:  TYPE_FP32
+    dims: [-1, -1, -1]
+},
+{
+    name: "INPUT__1"
+    data_type:  TYPE_FP32
+    dims: [-1, -1, -1]
+},
+{
+    name: "INPUT__2"
+    data_type:  TYPE_FP32
+    dims: [-1, -1, -1]
+},
+{
+    name: "INPUT__3"
+    data_type:  TYPE_FP32
+    dims: [-1, -1]
+}
+]
+output:[
+{
+    name: "OUTPUT__0"
+    data_type:  TYPE_FP32
+    dims: [-1, -1, -1]
+}
+]
