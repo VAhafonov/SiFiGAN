@@ -17,7 +17,7 @@ from typing import List
 
 import torch
 import torch.nn as nn
-from sifigan.layers import AdaptiveResidualBlock, Conv1d, ResidualBlock, ModuleInterface, ModuleInterfaceTwoInput
+from sifigan.layers import AdaptiveResidualBlock, Conv1d, ResidualBlock, ModuleInterface
 
 # A logger for this file
 logger = getLogger(__name__)
