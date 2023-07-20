@@ -4,6 +4,7 @@
 #  MIT License (https://opensource.org/licenses/MIT)
 
 """Indexing-related functions."""
+from typing import List
 
 import torch
 
@@ -31,16 +32,24 @@ def pd_indexing(x: torch.Tensor, d: torch.Tensor, dilation: int):
     # get past index (assume reflect padding)
     idx_base = torch.arange(0, T, dtype=torch.long, device=x.device).reshape(1, 1, T)
     idxP = (idx_base - dilations).abs() % T
-    idxP_idx = (batch_index, ch_index, idxP)
+    idxP = (batch_index, ch_index, idxP)
+    idxP_idx: List[List[List[List[int]]]] = []
+    for elem in idxP:
+        inner_list: List[List[List[int]]] = elem.tolist()
+        idxP_idx.append(inner_list)
 
     # get future index (assume reflect padding)
     idxF = idx_base + dilations
     overflowed = idxF >= T
     idxF[overflowed] = -(idxF[overflowed] % T)
-    idxF_idx = (batch_index, ch_index, idxF)
+    idxF = (batch_index, ch_index, idxF)
+    idxF_idx: List[List[List[List[int]]]] = []
+    for elem in idxF:
+        inner_list: List[List[List[int]]] = elem.tolist()
+        idxF_idx.append(inner_list)
 
     # return x[list(idxP_idx)], x[list(idxF_idx)]
-    return x[[idx.tolist() for idx in list(idxP_idx)]], x[[idx.tolist() for idx in list(idxF_idx)]]
+    return x[idxP_idx], x[idxF_idx]
 
 
 def index_initial(n_batch, n_ch, tensor=True):
