@@ -249,6 +249,7 @@ class AdaptiveResidualBlock(nn.Module):
         """
         batch_index, ch_index = index_initial_for_jit(x.size(0), self.channels)
         for i, dilation in enumerate(self.dilations):
+            assert isinstance(i, int)
             xt = self.nonlinears[i](x)
             xP, xF = pd_indexing(xt, d, dilation, batch_index, ch_index)
             xt = self.convsC[i](xt) + self.convsP[i](xP) + self.convsF[i](xF)
