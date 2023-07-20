@@ -156,9 +156,11 @@ class ResidualBlock(nn.Module):
 
         """
         for idx in range(len(self.convs1)):
-            xt = self.convs1[idx](x)
-            if self.use_additional_convs:
-                xt = self.convs2[idx](xt)
+            submodule: ModuleInterface = self.convs1[idx]
+            xt = submodule.forward(x)
+            # if self.use_additional_convs:
+            #     submodule1: ModuleInterface = self.convs2[idx]
+            #     xt = submodule1.forward(xt)
             x = xt + x
         return x
 
