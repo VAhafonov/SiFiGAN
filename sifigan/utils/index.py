@@ -31,15 +31,15 @@ def pd_indexing(x: torch.Tensor, d: torch.Tensor, dilation: int):
     # get past index (assume reflect padding)
     idx_base = torch.arange(0, T, dtype=torch.long, device=x.device).reshape(1, 1, T)
     idxP = (idx_base - dilations).abs() % T
-    idxP = (batch_index, ch_index, idxP)
+    idxP_idx = (batch_index, ch_index, idxP)
 
     # get future index (assume reflect padding)
     idxF = idx_base + dilations
     overflowed = idxF >= T
     idxF[overflowed] = -(idxF[overflowed] % T)
-    idxF = (batch_index, ch_index, idxF)
+    idxF_idx = (batch_index, ch_index, idxF)
 
-    return x[list(idxP)], x[list(idxF)]
+    return x[list(idxP_idx)], x[list(idxF_idx)]
 
 
 def index_initial(n_batch, n_ch, tensor=True):
