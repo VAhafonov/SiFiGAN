@@ -260,6 +260,7 @@ class AdaptiveResidualBlock(nn.Module):
             submodule: ModuleInterface = self.nonlinears[i]
             xt = submodule.forward(x)
 
+            assert isinstance(dilation, int)
             xP, xF = pd_indexing(xt, d, dilation)
 
             submodule1: ModuleInterface = self.convsC[i]
