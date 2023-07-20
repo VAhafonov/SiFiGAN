@@ -25,9 +25,13 @@ def main():
     path_to_tensor_dict = '/home/ubuntu/test_tensor.pth'
     tensor_dict = torch.load(path_to_tensor_dict, map_location='cpu')
     input_0 = tensor_dict['in_signal']
+    print("0", input_0.shape)
     input_1 = tensor_dict['c']
+    print("1", input_1.shape)
     input_2 = tensor_dict['dfs']
+    print("2", input_2.shape)
     input_3 = tensor_dict['true_lengths']
+    print("3", input_3.shape)
 
     model_name = "sifigan"
     # Infer
