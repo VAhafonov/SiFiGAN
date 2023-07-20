@@ -33,7 +33,8 @@ def pd_indexing(x: torch.Tensor, d: torch.Tensor, dilation: int):
     idx_base = torch.arange(0, T, dtype=torch.long, device=x.device).reshape(1, 1, T)
     idxP = (idx_base - dilations).abs() % T
     idxP = (batch_index, ch_index, idxP)
-    idxP_idx: List[List[List[List[int]]]] = []
+    # idxP_idx: List[List[List[List[int]]]] = []
+    idxP_idx = torch.jit.annotate(List[List[List[List[int]]]], [])
     for elem in idxP:
         inner_list: List[List[List[int]]] = elem.tolist()
         idxP_idx.append(inner_list)
