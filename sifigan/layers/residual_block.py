@@ -145,7 +145,7 @@ class ResidualBlock(nn.Module):
                     )
                 ]
 
-    def forward(self, x):
+    def forward(self, input: torch.Tensor):
         """Calculate forward propagation.
 
         Args:
@@ -157,12 +157,12 @@ class ResidualBlock(nn.Module):
         """
         for idx in range(len(self.convs1)):
             submodule: ModuleInterface = self.convs1[idx]
-            xt = submodule.forward(x)
+            xt = submodule.forward(input)
             # if self.use_additional_convs:
             #     submodule1: ModuleInterface = self.convs2[idx]
             #     xt = submodule1.forward(xt)
-            x = xt + x
-        return x
+            input = xt + input
+        return input
 
 
 class AdaptiveResidualBlock(nn.Module):
