@@ -17,7 +17,7 @@ from logging import getLogger
 import torch
 import torch.nn as nn
 from sifigan.layers import Snake
-from sifigan.utils import index_initial, pd_indexing
+from sifigan.utils import index_initial, pd_indexing, index_initial_for_jit
 
 # A logger for this file
 logger = getLogger(__name__)
@@ -247,7 +247,7 @@ class AdaptiveResidualBlock(nn.Module):
             Tensor: Output tensor (B, channels, T).
 
         """
-        batch_index, ch_index = index_initial(x.size(0), self.channels)
+        batch_index, ch_index = index_initial_for_jit(x.size(0), self.channels)
         for i, dilation in enumerate(self.dilations):
             xt = self.nonlinears[i](x)
             xP, xF = pd_indexing(xt, d, dilation, batch_index, ch_index)
