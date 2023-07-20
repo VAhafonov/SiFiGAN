@@ -22,6 +22,12 @@ from sifigan.utils import index_initial, pd_indexing, index_initial_for_jit
 # A logger for this file
 logger = getLogger(__name__)
 
+# add ModuleInterface
+@torch.jit.interface
+class ModuleInterface(torch.nn.Module):
+    def forward(self, input: torch.Tensor) -> torch.Tensor: # `input` has a same name in Sequential forward
+        pass
+
 
 class Conv1d(nn.Conv1d):
     """Conv1d module with customized initialization."""
@@ -247,13 +253,20 @@ class AdaptiveResidualBlock(nn.Module):
             Tensor: Output tensor (B, channels, T).
 
         """
-        batch_index, ch_index = index_initial_for_jit(x.size(0), self.channels)
         for i, dilation in enumerate(self.dilations):
             assert isinstance(i, int)
-            xt = self.nonlinears[i](x)
-            xP, xF = pd_indexing(xt, d, dilation, batch_index, ch_index)
-            xt = self.convsC[i](xt) + self.convsP[i](xP) + self.convsF[i](xF)
+            submodule: ModuleInterface = self.nonlinears[i]
+            xt = submodule.forward(x)
+
+            xP, xF = pd_indexing(xt, d, dilation)
+
+            submodule1: ModuleInterface = self.convsC[i]
+            submodule2: ModuleInterface = self.convsP[i]
+            submodule3: ModuleInterface = self.convsF[i]
+            xt = submodule1.forward(xt) + submodule2.forward(xP) + submodule3.forward(xF)
+
             if self.use_additional_convs:
-                xt = self.convsA[i](xt)
+                submodule4: ModuleInterface = self.convsA[i]
+                xt = submodule4.forward(xt)
             x = xt + x
         return x
