@@ -46,7 +46,8 @@ def pd_indexing(x: torch.Tensor, d: torch.Tensor, dilation: int):
     overflowed = idxF >= T
     idxF[overflowed] = -(idxF[overflowed] % T)
     idxF = (batch_index, ch_index, idxF)
-    idxF_idx: List[List[List[List[int]]]] = []
+    # idxF_idx: List[List[List[List[int]]]] = []
+    idxF_idx = torch.jit.annotate(List[List[List[List[int]]]], [])
     for elem in idxF:
         inner_list: List[List[List[int]]] = elem.tolist()
         idxF_idx.append(inner_list)
