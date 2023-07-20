@@ -38,6 +38,9 @@ def pd_indexing(x: torch.Tensor, d: torch.Tensor, dilation: int):
         inner_list: List[List[List[int]]] = elem.tolist()
         idxP_idx.append(inner_list)
 
+    # temp
+    indexed_x_p = x[idxP_idx]
+
     # get future index (assume reflect padding)
     idxF = idx_base + dilations
     overflowed = idxF >= T
@@ -49,7 +52,7 @@ def pd_indexing(x: torch.Tensor, d: torch.Tensor, dilation: int):
         idxF_idx.append(inner_list)
 
     # return x[list(idxP_idx)], x[list(idxF_idx)]
-    return x[idxP_idx], x[idxF_idx]
+    return indexed_x_p, x[idxF_idx]
 
 
 def index_initial(n_batch, n_ch, tensor=True):
