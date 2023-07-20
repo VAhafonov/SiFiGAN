@@ -448,7 +448,7 @@ class SiFiGANGenerator(nn.Module):
         # reset parameters
         self.reset_parameters()
 
-    def forward(self, x: torch.Tensor, c: torch.Tensor, d: torch.Tensor, true_lengths: torch.Tensor):
+    def forward(self, x: torch.Tensor, c: torch.Tensor, d: torch.Tensor, true_lengths: torch.Tensor) -> torch.Tensor:
         """Calculate forward propagation.
 
         Args:
@@ -482,7 +482,7 @@ class SiFiGANGenerator(nn.Module):
             submodule_up: ModuleInterface = self.sn["upsamples"][i]
             e = submodule_up.forward(e) + embs[-i - 1]
             e = layer(e, d[i])
-        e_ = self.sn["output_conv"](e)
+        # e_ = self.sn["output_conv"](e)
 
         # filter-network forward
         embs = [e]
@@ -507,7 +507,7 @@ class SiFiGANGenerator(nn.Module):
             c = cs / self.num_proc_blocks
         c = self.fn["output_conv"](c)
 
-        return c, e_
+        return c #, e_
 
     def reset_parameters(self):
         """Reset parameters.
