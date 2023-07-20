@@ -463,8 +463,11 @@ class SiFiGANGenerator(nn.Module):
         # process offsets
         d_list = []
         for idx in range(true_lengths.shape[-1]):
-            true_length_value = true_lengths[:, idx]
-            d_list.append(d[:, idx, :true_length_value])
+            if true_lengths.shape[0] == 1:
+                true_length_value = true_lengths[0, idx]
+                d_list.append(d[0, idx, :true_length_value])
+            else:
+                raise Exception
         d = d_list
         # currently, same input feature is input to each network
         c = self.input_conv(c)
