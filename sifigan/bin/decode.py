@@ -105,9 +105,28 @@ def main(config: DictConfig) -> None:
                 elif config.data.sine_f0_type == "f0":
                     in_signal = signal_generator(f0)
 
+                # do trick to support dynamic sized denses without using list in model
+                # currently work only with batch size 1
+                true_lengths = torch.zeros((in_signal.shape[0], len(dfs)), dtype=torch.int64, device=in_signal.device)
+
+                max_length = - 1
+                for df in dfs:
+                    if df.shape[-1] > max_length:
+                        max_length = df.shape[-1]
+
+                for idx, df in enumerate(dfs):
+                    offset = max_length - df.shape[-1]
+                    true_lengths[:, idx] = df.shape[-1]
+                    if offset == 0:
+                        continue
+                    dfs[idx] = torch.cat([df, torch.zeros((*df.shape[:-1], offset), dtype=df.dtype, device=df.device)], dim=-1)
+
+                # cat across 1-st axis
+                dfs = torch.cat(dfs, dim=1)
+
                 # perform decoding
                 start = time()
-                outs = model(in_signal, c, dfs)
+                outs = model(in_signal, c, dfs, true_lengths)
                 y = outs[0]
                 rtf = (time() - start) / (y.size(-1) / config.data.sample_rate)
                 pbar.set_postfix({"RTF": rtf})

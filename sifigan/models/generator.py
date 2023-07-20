@@ -448,7 +448,7 @@ class SiFiGANGenerator(nn.Module):
         # reset parameters
         self.reset_parameters()
 
-    def forward(self, x: torch.Tensor, c: torch.Tensor, d: List[torch.Tensor]):
+    def forward(self, x: torch.Tensor, c: torch.Tensor, d: torch.Tensor, true_lengths: torch.Tensor):
         """Calculate forward propagation.
 
         Args:
@@ -460,6 +460,12 @@ class SiFiGANGenerator(nn.Module):
             Tensor: Output tensor (B, out_channels, T).
 
         """
+        # process offsets
+        d_list = []
+        for idx in range(true_lengths.shape[-1]):
+            true_length_value = true_lengths[:, idx]
+            d_list.append(d[:, idx, :true_length_value])
+        d = d_list
         # currently, same input feature is input to each network
         c = self.input_conv(c)
         e = c
