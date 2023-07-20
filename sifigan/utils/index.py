@@ -33,28 +33,18 @@ def pd_indexing(x: torch.Tensor, d: torch.Tensor, dilation: int):
     idx_base = torch.arange(0, T, dtype=torch.long, device=x.device).reshape(1, 1, T)
     idxP = (idx_base - dilations).abs() % T
     idxP = (batch_index, ch_index, idxP)
-    # idxP_idx: List[List[List[List[int]]]] = []
-    idxP_idx = torch.jit.annotate(List[List[List[List[int]]]], [])
-    for elem in idxP:
-        inner_list: List[List[List[int]]] = elem.tolist()
-        idxP_idx.append(inner_list)
 
-    # temp
-    indexed_x_p = x[idxP_idx]
+    index_xp = x[idxP[0][0, 0, 0]][idxP[1][0, :, 0]][:, idxP[2][0, 0, :]]
 
     # get future index (assume reflect padding)
     idxF = idx_base + dilations
     overflowed = idxF >= T
     idxF[overflowed] = -(idxF[overflowed] % T)
     idxF = (batch_index, ch_index, idxF)
-    # idxF_idx: List[List[List[List[int]]]] = []
-    idxF_idx = torch.jit.annotate(List[List[List[List[int]]]], [])
-    for elem in idxF:
-        inner_list: List[List[List[int]]] = elem.tolist()
-        idxF_idx.append(inner_list)
 
-    # return x[list(idxP_idx)], x[list(idxF_idx)]
-    return indexed_x_p, x[idxF_idx]
+    index_xf = x[idxF[0][0, 0, 0]][idxF[1][0, :, 0]][:, idxF[2][0, 0, :]]
+
+    return index_xp, index_xf
 
 
 def index_initial(n_batch, n_ch, tensor=True):
