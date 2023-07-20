@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import sys
 
@@ -54,10 +56,12 @@ def main():
     outputs.append(grpcclient.InferRequestedOutput('OUTPUT__0'))
 
     # Test with outputs
+    start_time = time.time()
     results = triton_client.infer(model_name=model_name,
                                     inputs=inputs,
                                     outputs=outputs,
                                     headers={'test': '1'})
+    print("Prediction taken:", time.time() - start_time, "seconds")
 
     # Get the output arrays from the results
     output0_data = results.as_numpy('OUTPUT__0')
