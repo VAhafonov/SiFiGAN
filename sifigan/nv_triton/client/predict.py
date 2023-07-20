@@ -36,7 +36,7 @@ def main():
     inputs.append(grpcclient.InferInput('INPUT__0', list(input_0.shape), "FP32"))
     inputs.append(grpcclient.InferInput('INPUT__1', list(input_1.shape), "FP32"))
     inputs.append(grpcclient.InferInput('INPUT__2', list(input_2.shape), "FP32"))
-    inputs.append(grpcclient.InferInput('INPUT__3', list(input_2.shape), "FP32"))
+    inputs.append(grpcclient.InferInput('INPUT__3', list(input_2.shape), "INT64"))
 
     # # batch size = 1, signal length = 48000
     # input0_data = np.random.randn(1, 48000).astype(np.float32)
