@@ -19,9 +19,11 @@ import numpy as np
 import pysptk
 import pyworld
 import soundfile as sf
-import yaml
+
 from scipy.interpolate import interp1d
 from scipy.signal import firwin, lfilter
+
+from sifigan.nv_triton.client.utils import read_yaml_config
 from sifigan.utils import read_txt, write_hdf5
 
 
@@ -257,16 +259,6 @@ def generate_hdf5_out_path_from_input_name(input_name: str, out_dir: str, extens
     filetitle = get_filetitle_from_path(input_name)
     hdf5_out_path = os.path.join(out_dir, filetitle + extension)
     return hdf5_out_path
-
-
-def read_yaml_config(path_to_config: str) -> dict:
-    with open(path_to_config, "r") as stream:
-        try:
-            config = yaml.safe_load(stream)
-            print()
-        except yaml.YAMLError as exc:
-            print(exc)
-    return config
 
 
 def extract_features_main(input_dir: str, output_dir: str, path_to_config: str):
