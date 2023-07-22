@@ -190,7 +190,7 @@ def decode_main(input_dir: str, output_dir: str, path_to_config: str) -> None:
                 # print('c shape', c.shape)
                 # print('dfs shape', dfs.shape)
                 # print('true_lengths shape', true_lengths.shape)
-                # y = outs
+                y = results
                 # print("!!!!!", torch.isnan(y).any())
                 rtf = (time() - start) / (y.size(-1) / config.data.sample_rate)
                 pbar.set_postfix({"RTF": rtf})
