@@ -1,0 +1,15 @@
+feature_format: .h5            # Feature format.
+sample_rate: 24000            # Sampling rate.
+
+# Audio preprocess setting.
+highpass_cutoff: 70           # Cut-off-frequency for low-cut-filter.
+
+# Mel-spectrogram extraction setting.
+fft_size: 1024                # FFT size.
+hop_size: 120                 # Hop size.
+
+# WORLD feature extraction setting.
+minf0: 100                    # Minimum F0 value.
+maxf0: 840                    # Maximum F0 value.
+shiftms: 5                    # Frameshift in ms.
+mcep_dim: 39                  # Number of dimension of mel-generalized cepstrum.
