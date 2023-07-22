@@ -17,7 +17,6 @@ import numpy as np
 import soundfile as sf
 import torch
 import tritonclient.grpc as grpcclient
-from hydra.utils import to_absolute_path
 from tqdm import tqdm
 
 from sifigan.datasets import FeatDataset
@@ -183,16 +182,8 @@ def decode_main(input_dir: str, output_dir: str, path_to_config: str) -> None:
                                               headers={'test': '1'})
                 print("Prediction taken:", time() - start, "seconds")
 
-                # # perform decoding
-                # start = time()
-                # outs = model(in_signal, c, dfs, true_lengths)
-                # print('in_signal shape', in_signal.shape)
-                # print('c shape', c.shape)
-                # print('dfs shape', dfs.shape)
-                # print('true_lengths shape', true_lengths.shape)
+
                 y = results.as_numpy('OUTPUT__0')
-                print(y)
-                # print("!!!!!", torch.isnan(y).any())
                 rtf = (time() - start) / (y.shape[-1] / data_config['sample_rate'])
                 pbar.set_postfix({"RTF": rtf})
                 total_rtf += rtf
