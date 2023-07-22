@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 import yaml
 
@@ -26,3 +27,14 @@ def prepare_out_folder(out_folder_path: str, force_cleanup: bool):
                     os.remove(absolute_path)
     else:
         os.makedirs(out_folder_path, exist_ok=True)
+
+
+def get_all_files_from_dir(dir_path: str) -> List[str]:
+    all_dir_content = os.listdir(dir_path)
+    all_files = []
+    for elem in all_dir_content:
+        absolute_path = os.path.join(dir_path, elem)
+        if os.path.isfile(absolute_path):
+            all_files.append(absolute_path)
+
+    return all_files

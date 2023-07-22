@@ -23,7 +23,7 @@ import soundfile as sf
 from scipy.interpolate import interp1d
 from scipy.signal import firwin, lfilter
 
-from sifigan.nv_triton.client.utils import read_yaml_config, prepare_out_folder
+from sifigan.nv_triton.client.utils import read_yaml_config, prepare_out_folder, get_all_files_from_dir
 from sifigan.utils import write_hdf5
 
 
@@ -218,17 +218,6 @@ def world_feature_extract(queue, wav_list, config, out_dir):
         write_hdf5(hdf5_out_name, "/bap", bap)
 
     queue.put("Finish")
-
-
-def get_all_files_from_dir(dir_path: str) -> List[str]:
-    all_dir_content = os.listdir(dir_path)
-    all_files = []
-    for elem in all_dir_content:
-        absolute_path = os.path.join(dir_path, elem)
-        if os.path.isfile(absolute_path):
-            all_files.append(absolute_path)
-
-    return all_files
 
 
 def get_filetitle_from_path(file_path: str) -> str:
