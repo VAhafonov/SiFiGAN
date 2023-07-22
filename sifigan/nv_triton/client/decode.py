@@ -34,7 +34,7 @@ def set_seed(seed: int):
 
 def create_dataset(data_config: dict, f0_factor: float, input_dir: str) -> FeatDataset:
     dataset = FeatDataset(
-        stats=to_absolute_path(data_config['stats']),
+        stats=data_config['stats'],
         feat_list=None,
         return_filename=True,
         sample_rate=data_config['sample_rate'],
@@ -114,9 +114,9 @@ def prepare_input_and_outputs_for_prediction(in_signal, c, dfs, true_lengths):
     inputs.append(grpcclient.InferInput('INPUT__3', list(true_lengths.shape), "INT64"))
 
     # Initialize the data
-    inputs[0].set_data_from_numpy(in_signal)
-    inputs[1].set_data_from_numpy(c)
-    inputs[2].set_data_from_numpy(dfs)
+    inputs[0].set_data_from_numpy(in_signal.astype(np.float32))
+    inputs[1].set_data_from_numpy(c.astype(np.float32))
+    inputs[2].set_data_from_numpy(dfs.astype(np.float32))
     inputs[3].set_data_from_numpy(true_lengths)
 
     outputs.append(grpcclient.InferRequestedOutput('OUTPUT__0'))
