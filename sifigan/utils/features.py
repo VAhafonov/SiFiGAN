@@ -10,9 +10,10 @@ References:
     - https://github.com/nii-yamagishilab/project-NN-Pytorch-scripts
 
 """
-
+import os
 import sys
 from logging import getLogger
+from typing import List
 
 import numpy as np
 import torch
@@ -65,6 +66,17 @@ def dilated_factor(batch_f0, fs, dense_factor):
     assert np.all(dilated_factors > 0)
 
     return dilated_factors
+
+
+def get_all_files_from_dir(dir_path: str) -> List[str]:
+    all_dir_content = os.listdir(dir_path)
+    all_files = []
+    for elem in all_dir_content:
+        absolute_path = os.path.join(dir_path, elem)
+        if os.path.isfile(absolute_path):
+            all_files.append(absolute_path)
+
+    return all_files
 
 
 class SignalGenerator:
