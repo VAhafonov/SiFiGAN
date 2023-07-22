@@ -10,7 +10,7 @@ data:
   valid_audio: data/scp/namine_ritsu_dev.scp  # List file of validation audio files.
   valid_feat: data/scp/namine_ritsu_dev.list  # List file of validation feature files.
   eval_feat: e:\Projects\SiFiGAN\egs\namine_ritsu\data\scp\namine_ritsu_eval.list    # List file of evaluation feature files for decoding.
-  stats: e:\Projects\SiFiGAN\egs\namine_ritsu\data\stats\namine_ritsu_train_no_dev.joblib   # Path to the file of statistics.
+  stats: configs/namine_ritsu_train_no_dev.joblib   # Path to the file of statistics.
   allow_cache: false  # Whether to allow cache in dataset. If true, it requires cpu memory
 
   # Feature settings
