@@ -23,8 +23,8 @@ import soundfile as sf
 from scipy.interpolate import interp1d
 from scipy.signal import firwin, lfilter
 
-from sifigan.nv_triton.client.utils import read_yaml_config
-from sifigan.utils import read_txt, write_hdf5
+from sifigan.nv_triton.client.utils import read_yaml_config, prepare_out_folder
+from sifigan.utils import write_hdf5
 
 
 # All-pass-filter coefficients {key -> sampling rate : value -> coefficient}
@@ -231,20 +231,6 @@ def get_all_files_from_dir(dir_path: str) -> List[str]:
     return all_files
 
 
-def prepare_out_folder(out_folder_path: str):
-    if os.path.exists(out_folder_path):
-        # cleanup folder
-        all_dir_content = os.listdir(out_folder_path)
-        if len(all_dir_content) != 0:
-            print("There are", len(all_dir_content), "objects in output dir. Cleaning it.")
-        for elem in all_dir_content:
-            absolute_path = os.path.join(out_folder_path, elem)
-            if os.path.isfile(absolute_path):
-                os.remove(absolute_path)
-    else:
-        os.makedirs(out_folder_path, exist_ok=True)
-
-
 def get_filetitle_from_path(file_path: str) -> str:
     # Split the file path into directory path and filename
     directory, filename = os.path.split(file_path)
@@ -279,7 +265,7 @@ def extract_features_main(input_dir: str, output_dir: str, path_to_config: str):
     target_fn = world_feature_extract
 
     # create folder
-    prepare_out_folder(output_dir)
+    prepare_out_folder(output_dir, force_cleanup=True)
 
     # multi processing
     processes = []
