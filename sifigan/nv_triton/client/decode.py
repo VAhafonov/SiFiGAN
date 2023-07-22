@@ -193,15 +193,15 @@ def decode_main(input_dir: str, output_dir: str, path_to_config: str) -> None:
                 y = results.as_numpy('OUTPUT__0')
                 print(y)
                 # print("!!!!!", torch.isnan(y).any())
-                rtf = (time() - start) / (y.size(-1) / config.data.sample_rate)
+                rtf = (time() - start) / (y.shape[-1] / data_config['sample_rate'])
                 pbar.set_postfix({"RTF": rtf})
                 total_rtf += rtf
 
                 # save output signal as PCM 16 bit wav file
                 utt_id = os.path.splitext(os.path.basename(feat_path))[0]
                 save_path = os.path.join(output_dir, f"{utt_id}_f{f0_factor:.2f}.wav")
-                y = y.view(-1).cpu().numpy()
-                sf.write(save_path, y, config.data.sample_rate, "PCM_16")
+                y = y.flatten()
+                sf.write(save_path, y, data_config['sample_rate'], "PCM_16")
 
             # report average RTF
             print(f"Finished generation of {idx} utterances (RTF = {total_rtf / idx:.4f}).")
