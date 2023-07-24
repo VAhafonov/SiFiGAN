@@ -25,6 +25,7 @@ def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_p
     state_dict = torch.load(checkpoint_path)
     model.load_state_dict(state_dict['model']['generator'])
     model.eval()
+    model.cuda()
     remove_weight_norm(model)
     in_signal, c, dfs, true_length = read_and_preprocess_input_tensors(test_tensor_path)
 
