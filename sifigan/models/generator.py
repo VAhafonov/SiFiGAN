@@ -450,7 +450,8 @@ class SiFiGANGenerator(nn.Module):
         # reset parameters
         self.reset_parameters()
 
-    def forward(self, x: torch.Tensor, c: torch.Tensor, d: torch.Tensor) -> torch.Tensor:
+    # def forward(self, x: torch.Tensor, c: torch.Tensor, d: torch.Tensor) -> torch.Tensor:
+    def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         """Calculate forward propagation.
 
         Args:
@@ -463,6 +464,10 @@ class SiFiGANGenerator(nn.Module):
 
         """
         # process offsets
+        x = input_tensor[:, 0:1, :]
+        c = input_tensor[:, 1:-self.num_upsamples]
+        c = c[:, :, input_tensor.shape[-1] // self.rates[-1]]
+        d = input_tensor[:, -self.num_upsamples:, :]
         d_list = []
         for idx in range(self.num_upsamples):
             d_list.append(d[:, idx, :c.shape[-1] * self.rates[idx]])
