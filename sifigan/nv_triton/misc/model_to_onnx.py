@@ -19,20 +19,19 @@ def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_p
     input_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=False,
                                                   do_convert_to_cuda=True)
     in_signal, c, dfs, _ = input_data
-    c = torch.cat([c, torch.zeros((c.shape[0], c.shape[1], in_signal.shape[-1] - c.shape[-1]), dtype=c.dtype,
-                                  device=c.device)], dim=-1)
 
     print("Start onnx export")
     start_time = time.time()
-    input_tensor = torch.cat([in_signal, c, dfs], dim=1)
     torch.onnx.export(model,
-                      args=(input_tensor),
+                      args=(in_signal, c, dfs),
                       f=save_path,
-                      input_names=["INPUT__0"],
+                      input_names=["INPUT__0", "INPUT__1", "INPUT__2", "INPUT__3"],
                       output_names=["OUTPUT__0"],
                       dynamic_axes={
-                          "INPUT__0": {0: "batch_size", 2: "input_dim_0_2"},
-                          "OUTPUT__0": {0: "batch_size", 1: "output_dim_0_1"}
+                          "INPUT__0": {0: "batch_size", 1: "input_dim_0_1", 2: "input_dim_0_2"},
+                          "INPUT__1": {0: "batch_size", 1: "input_dim_1_1", 2: "input_dim_1_2"},
+                          "INPUT__2": {0: "batch_size", 1: "input_dim_2_1", 2: "input_dim_2_2"},
+                          "OUTPUT__0": {0: "batch_size", 1: "output_dim_0_1"},
                       },
                       verbose=False,
                       export_params=True
