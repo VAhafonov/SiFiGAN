@@ -19,7 +19,7 @@ def remove_weight_norm(module):
             remove_weight_norm(mod)
 
 
-def convert_and_save_as_jit(checkpoint_path: str, save_path: str):
+def convert_and_save_as_jit(checkpoint_path: str, save_path: str or None):
     model = SiFiGANGenerator(in_channels=43, out_channels=1, channels=512, kernel_size=7,
                              upsample_scales=[5, 4, 3, 2], upsample_kernel_sizes=[10, 8, 6, 4])
     state_dict = torch.load(checkpoint_path)
@@ -34,7 +34,9 @@ def convert_and_save_as_jit(checkpoint_path: str, save_path: str):
     #      torch.rand((1, 1, 37620), dtype=torch.float32), torch.rand((1, 1, 75240), dtype=torch.float32)]
 
     traced_model = torch.jit.script(model)
-    traced_model.save(save_path)
+    if save_path is not None:
+        traced_model.save(save_path)
+    return traced_model
 
 
 if __name__ == "__main__":
