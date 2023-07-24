@@ -10,7 +10,7 @@ def onnx_to_tensorrt_main(onnx_model_path: str, trt_model_pah: str, fp16: bool):
 
     print("making plan for", onnx_model_path)
 
-    logger = trt.Logger(trt.Logger.INFO)
+    logger = trt.Logger(trt.Logger.VERBOSE)
 
     builder = trt.Builder(logger)
     network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
