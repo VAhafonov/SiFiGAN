@@ -3,7 +3,8 @@ from typing import Tuple
 
 import torch
 
-from sifigan.bin.model_to_jit import convert_and_save_as_jit
+from sifigan.bin.model_to_jit import convert_and_save_as_jit, remove_weight_norm
+from sifigan.models import SiFiGANGenerator
 
 
 def read_and_preprocess_input_tensors(test_tensor_path: str) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -18,10 +19,16 @@ def read_and_preprocess_input_tensors(test_tensor_path: str) -> Tuple[torch.Tens
 
 
 def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_path: str):
-    traced_model = convert_and_save_as_jit(checkpoint_path, save_path=None)
+    # traced_model = convert_and_save_as_jit(checkpoint_path, save_path=None)
+    model = SiFiGANGenerator(in_channels=43, out_channels=1, channels=512, kernel_size=7,
+                             upsample_scales=[5, 4, 3, 2], upsample_kernel_sizes=[10, 8, 6, 4])
+    state_dict = torch.load(checkpoint_path)
+    model.load_state_dict(state_dict['model']['generator'])
+    model.eval()
+    remove_weight_norm(model)
     in_signal, c, dfs, true_length = read_and_preprocess_input_tensors(test_tensor_path)
 
-    torch.onnx.export(traced_model,
+    torch.onnx.export(model,
                       args=(in_signal, c, dfs, true_length),
                       f=save_path,
                       input_names=["INPUT__0", "INPUT__1", "INPUT__2", "INPUT__3"],
