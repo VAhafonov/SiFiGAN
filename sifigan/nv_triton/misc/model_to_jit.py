@@ -21,8 +21,10 @@ def convert_and_save_as_jit(checkpoint_path: str, save_path: str or None):
     #      torch.rand((1, 1, 37620), dtype=torch.float32), torch.rand((1, 1, 75240), dtype=torch.float32)]
 
     traced_model = torch.jit.script(model)
+    print("Model successfully traced.")
     if save_path is not None:
         traced_model.save(save_path)
+        print("Model successfully saved.")
     return traced_model
 
 
