@@ -15,6 +15,7 @@ References:
 from logging import getLogger
 from typing import List
 
+import numpy as np
 import torch
 import torch.nn as nn
 from sifigan.layers import AdaptiveResidualBlock, Conv1d, ResidualBlock, ModuleInterface
@@ -303,6 +304,7 @@ class SiFiGANGenerator(nn.Module):
         # check hyperparameters are valid
         assert kernel_size % 2 == 1, "Kernel size must be odd number."
         assert len(upsample_scales) == len(upsample_kernel_sizes)
+        self.rates = list(np.cumprod(upsample_scales))
 
         # define modules
         self.num_upsamples = len(upsample_kernel_sizes)
@@ -448,7 +450,7 @@ class SiFiGANGenerator(nn.Module):
         # reset parameters
         self.reset_parameters()
 
-    def forward(self, x: torch.Tensor, c: torch.Tensor, d: torch.Tensor, true_lengths: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, c: torch.Tensor, d: torch.Tensor) -> torch.Tensor:
         """Calculate forward propagation.
 
         Args:
@@ -462,12 +464,8 @@ class SiFiGANGenerator(nn.Module):
         """
         # process offsets
         d_list = []
-        for idx in range(true_lengths.shape[-1]):
-            if true_lengths.shape[0] == 1:
-                true_length_value = true_lengths[0, idx]
-                d_list.append(d[0, idx, :true_length_value])
-            else:
-                raise Exception
+        for idx in range(self.num_upsamples):
+            d_list.append(d[:, idx, :c.shape[-1] * self.rates[idx]])
         d = d_list
         # currently, same input feature is input to each network
         c = self.input_conv(c)
