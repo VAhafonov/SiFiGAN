@@ -3,6 +3,7 @@ import argparse
 import torch
 
 from sifigan.models import SiFiGANGenerator
+from sifigan.nv_triton.misc.utils_funcs import remove_weight_norm
 
 
 def convert_and_save_as_jit(checkpoint_path: str, save_path: str or None):
