@@ -1,4 +1,5 @@
 import argparse
+import time
 
 import torch
 
@@ -17,10 +18,12 @@ def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_p
     remove_weight_norm(model)
     input_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=False,
                                                   do_convert_to_cuda=True)
-    in_signal, c, dfs, true_length = input_data
+    in_signal, c, dfs, _ = input_data
 
+    print("Start onnx export")
+    start_time = time.time()
     torch.onnx.export(model,
-                      args=(in_signal, c, dfs, true_length),
+                      args=(in_signal, c, dfs),
                       f=save_path,
                       input_names=["INPUT__0", "INPUT__1", "INPUT__2", "INPUT__3"],
                       output_names=["OUTPUT__0"],
@@ -28,12 +31,12 @@ def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_p
                           "INPUT__0": {0: "batch_size", 1: "input_dim_0_1", 2: "input_dim_0_2"},
                           "INPUT__1": {0: "batch_size", 1: "input_dim_1_1", 2: "input_dim_1_2"},
                           "INPUT__2": {0: "batch_size", 1: "input_dim_2_1", 2: "input_dim_2_2"},
-                          "INPUT__3": {0: "batch_size", 1: "input_dim_3_1"},
                           "OUTPUT__0": {0: "batch_size", 1: "output_dim_0_1"},
                       },
-                      verbose=True,
+                      verbose=False,
                       export_params=True
                       )
+    print("Done onnx export. Time taken:", str(time.time() - start_time))
 
 
 if __name__ == "__main__":
