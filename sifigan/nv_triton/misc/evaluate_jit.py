@@ -13,7 +13,7 @@ def evaluate_jit_main(jit_model_path: str, test_tensor_path: str):
     input_data, output_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=True,
                                                                do_convert_to_cuda=False)
     # predict
-    jit_output = jit_model(input_data.in_signal, input_data.c, input_data.dfs, input_data.true_length)
+    jit_output = jit_model(input_data.in_signal, input_data.c, input_data.dfs)
 
     # compare tensors
     jit_output_np = jit_output.detach().numpy()
