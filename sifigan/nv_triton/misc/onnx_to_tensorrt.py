@@ -22,9 +22,9 @@ def onnx_to_tensorrt_main(onnx_model_path: str, trt_model_pah: str, fp16: bool):
 
     # Create an optimization profile for dynamic input shapes
     profile = builder.create_optimization_profile()
-    profile.set_shape("INPUT__0", (1, 1, 1000), (1, 1, 10000), (1, 1, 1000000))
-    profile.set_shape("INPUT__1", (1, 43, 100), (1, 43, 1000), (1, 43, 10000))
-    profile.set_shape("INPUT__2", (1, 4, 1000), (1, 4, 10000), (1, 4, 1000000))
+    profile.set_shape("INPUT__0", (1, 1, 1200), (1, 1, 12000), (1, 1, 1200000))
+    profile.set_shape("INPUT__1", (1, 43, 10), (1, 43, 100), (1, 43, 10000))
+    profile.set_shape("INPUT__2", (1, 4, 1200), (1, 4, 12000), (1, 4, 1200000))
     config.add_optimization_profile(profile)
     print(config)
 
