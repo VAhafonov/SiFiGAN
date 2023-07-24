@@ -304,7 +304,7 @@ class SiFiGANGenerator(nn.Module):
         # check hyperparameters are valid
         assert kernel_size % 2 == 1, "Kernel size must be odd number."
         assert len(upsample_scales) == len(upsample_kernel_sizes)
-        self.rates = list(np.cumprod(upsample_scales))
+        self.rates = torch.from_numpy(np.cumprod(upsample_scales))
 
         # define modules
         self.num_upsamples = len(upsample_kernel_sizes)
