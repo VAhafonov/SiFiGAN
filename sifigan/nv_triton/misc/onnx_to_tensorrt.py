@@ -27,6 +27,7 @@ def onnx_to_tensorrt_main(onnx_model_path: str, trt_model_pah: str, fp16: bool):
     profile.set_shape("INPUT__2", (1, 1, 1000), (1, 4, 10000), (1, 8, 1000000))
     profile.set_shape("INPUT__3", (1, 1), (1, 4), (1, 8))
     config.add_optimization_profile(profile)
+    print(config)
 
     parser = trt.OnnxParser(network, logger)
     ok = parser.parse_from_file(onnx_model_path)
