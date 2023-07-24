@@ -4,7 +4,7 @@ from typing import Tuple
 import torch
 
 from sifigan.models import SiFiGANGenerator
-from sifigan.nv_triton.misc.model_to_jit import remove_weight_norm
+from sifigan.nv_triton.misc.utils_funcs import remove_weight_norm
 
 
 def read_and_preprocess_input_tensors(test_tensor_path: str) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:

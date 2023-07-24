@@ -1,22 +1,8 @@
 import argparse
 
 import torch
-from torch.nn.utils.weight_norm import WeightNorm
 
 from sifigan.models import SiFiGANGenerator
-
-
-# workaround from https://github.com/pytorch/pytorch/issues/57289
-def remove_weight_norm(module):
-    module_list = [mod for mod in module.children()]
-    if len(module_list) == 0:
-        for k, hook in module._forward_pre_hooks.items():
-            if isinstance(hook, WeightNorm):
-                hook.remove(module)
-                del module._forward_pre_hooks[k]
-    else:
-        for mod in module_list:
-            remove_weight_norm(mod)
 
 
 def convert_and_save_as_jit(checkpoint_path: str, save_path: str or None):
