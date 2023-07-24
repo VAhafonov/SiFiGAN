@@ -1,4 +1,5 @@
 import argparse
+import time
 
 import torch
 
@@ -13,15 +14,10 @@ def convert_and_save_as_jit(checkpoint_path: str, save_path: str or None):
     model.load_state_dict(state_dict['model']['generator'])
     model.eval()
     remove_weight_norm(model)
-
-    # # create dummy data with shape as in one runs
-    # x = torch.rand((1, 1, 75240), dtype=torch.float32)
-    # c = torch.rand((1, 43, 627), dtype=torch.float32)
-    # d = [torch.rand((1, 1, 3135), dtype=torch.float32), torch.rand((1, 1, 12540), dtype=torch.float32),
-    #      torch.rand((1, 1, 37620), dtype=torch.float32), torch.rand((1, 1, 75240), dtype=torch.float32)]
-
+    print("Start tracing model")
+    start_time = time.time()
     traced_model = torch.jit.script(model)
-    print("Model successfully traced.")
+    print("Model successfully traced. Time taken:", str(time.time() - start_time))
     if save_path is not None:
         traced_model.save(save_path)
         print("Model successfully saved.")
