@@ -11,10 +11,10 @@ def evaluate_onnx_main(onnx_model_path: str, test_tensor_path: str):
     input_data, output_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=True,
                                                                do_convert_to_cuda=False)
     # Run the ONNX model with the input data
-    outputs = ort_session.run(None, {"INPUT__0": input_data.in_signal,
-                                     "INPUT__1": input_data.c,
-                                     "INPUT__2": input_data.dfs,
-                                     "INPUT__3": input_data.true_length})
+    outputs = ort_session.run(None, {"INPUT__0": input_data.in_signal.numpy(),
+                                     "INPUT__1": input_data.c.numpy(),
+                                     "INPUT__2": input_data.dfs.numpy(),
+                                     "INPUT__3": input_data.true_length.numpy()})
     print(outputs)
 
     # jit_output = jit_model(input_data.in_signal, input_data.c, input_data.dfs, input_data.true_length)
