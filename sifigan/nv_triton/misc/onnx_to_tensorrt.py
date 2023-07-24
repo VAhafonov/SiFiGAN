@@ -10,7 +10,7 @@ def onnx_to_tensorrt_main(onnx_model_path: str, trt_model_pah: str, fp16: bool):
 
     print("making plan for", onnx_model_path)
 
-    logger = trt.Logger(trt.Logger.VERBOSE)
+    logger = trt.Logger(trt.Logger.INFO)
 
     builder = trt.Builder(logger)
     network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
@@ -22,9 +22,9 @@ def onnx_to_tensorrt_main(onnx_model_path: str, trt_model_pah: str, fp16: bool):
 
     # Create an optimization profile for dynamic input shapes
     profile = builder.create_optimization_profile()
-    profile.set_shape("INPUT__0", (1, 1, 75240), (1, 1, 75240), (1, 1, 75240))
-    profile.set_shape("INPUT__1", (1, 43, 627), (1, 43, 627), (1, 43, 627))
-    profile.set_shape("INPUT__2", (1, 4, 75240), (1, 4, 75240), (1, 4, 75240))
+    profile.set_shape("INPUT__0", (1, 1, 12000), (1, 1, 75240), (1, 1, 75240))
+    profile.set_shape("INPUT__1", (1, 43, 100), (1, 43, 627), (1, 43, 627))
+    profile.set_shape("INPUT__2", (1, 4, 12000), (1, 4, 75240), (1, 4, 75240))
     config.add_optimization_profile(profile)
     print(config)
 
