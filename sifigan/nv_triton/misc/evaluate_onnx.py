@@ -13,8 +13,7 @@ def evaluate_onnx_main(onnx_model_path: str, test_tensor_path: str):
     # Run the ONNX model with the input data
     outputs = ort_session.run(None, {"INPUT__0": input_data.in_signal.numpy(),
                                      "INPUT__1": input_data.c.numpy(),
-                                     "INPUT__2": input_data.dfs.numpy(),
-                                     "INPUT__3": input_data.true_length.numpy()})
+                                     "INPUT__2": input_data.dfs.numpy()})
     # compare tensors
     onnx_output_np = outputs[0]
     target_output = output_data.y.numpy()
