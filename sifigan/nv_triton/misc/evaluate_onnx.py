@@ -15,7 +15,13 @@ def evaluate_onnx_main(onnx_model_path: str, test_tensor_path: str):
                                      "INPUT__1": input_data.c.numpy(),
                                      "INPUT__2": input_data.dfs.numpy(),
                                      "INPUT__3": input_data.true_length.numpy()})
-    print(outputs)
+    # compare tensors
+    onnx_output_np = outputs[0]
+    target_output = output_data.y.numpy()
+    are_tensors_equal = np.allclose(onnx_output_np, target_output, equal_nan=True, atol=1e-5)
+    print("Tensors are equal:", are_tensors_equal)
+    print("Max diff in tensors:",
+          np.max(np.abs(onnx_output_np[~np.isnan(onnx_output_np)] - target_output[~np.isnan(target_output)])))
 
     # jit_output = jit_model(input_data.in_signal, input_data.c, input_data.dfs, input_data.true_length)
     #
