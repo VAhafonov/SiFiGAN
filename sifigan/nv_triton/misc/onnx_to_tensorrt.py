@@ -35,6 +35,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("onnx_models_path", type=str)
     parser.add_argument("trt_models_dir", type=str)
-    parser.add_argument("fp16", type=str, default='false')
+    parser.add_argument("--fp16", type=str, default='false')
     _args = parser.parse_args()
     onnx_to_tensorrt_main(_args.onnx_models_path, _args.trt_models_dir, parse_bool(_args.fp16))
