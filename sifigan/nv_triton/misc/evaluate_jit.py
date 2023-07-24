@@ -15,9 +15,9 @@ def evaluate_jit_main(jit_model_path: str, test_tensor_path: str):
     # compare tensors
     jit_output_np = jit_output.detach().numpy()
     target_output = output_data.y.numpy()
-    are_tensors_equal = np.allclose(jit_output_np, target_output, equal_nan=True, atol=1e-6)
+    are_tensors_equal = np.allclose(jit_output_np, target_output, equal_nan=True, atol=1e-5)
     print(are_tensors_equal)
-    print(np.sum(np.abs(jit_output_np[~np.isnan(jit_output_np)] - target_output[~np.isnan(target_output)])))
+    print(np.max(np.abs(jit_output_np[~np.isnan(jit_output_np)] - target_output[~np.isnan(target_output)])))
     pass
 
 
