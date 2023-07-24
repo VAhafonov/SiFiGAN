@@ -1,21 +1,9 @@
 import argparse
-from typing import Tuple
 
 import torch
 
 from sifigan.models import SiFiGANGenerator
-from sifigan.nv_triton.misc.utils_funcs import remove_weight_norm
-
-
-def read_and_preprocess_input_tensors(test_tensor_path: str) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    dict_ = torch.load(test_tensor_path, map_location='cpu')
-
-    in_signal = dict_['in_signal'].cuda()
-    c = dict_['c'].cuda()
-    dfs = dict_['dfs'].cuda()
-    true_length = dict_['true_lengths'].cuda()
-
-    return in_signal, c, dfs, true_length
+from sifigan.nv_triton.misc.utils_funcs import remove_weight_norm, read_and_preprocess_test_tensors
 
 
 def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_path: str):
@@ -27,7 +15,9 @@ def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_p
     model.eval()
     model.cuda()
     remove_weight_norm(model)
-    in_signal, c, dfs, true_length = read_and_preprocess_input_tensors(test_tensor_path)
+    input_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=False,
+                                                  do_convert_to_cuda=True)
+    in_signal, c, dfs, true_length = input_data
 
     torch.onnx.export(model,
                       args=(in_signal, c, dfs, true_length),
