@@ -20,4 +20,4 @@ if __name__ == '__main__':
     parser.add_argument("test_tensor_path", type=str)
     _args = parser.parse_args()
 
-    evaluate_jit_main(_args.chkp_path, _args.save_path)
+    evaluate_jit_main(_args.jit_model_path, _args.test_tensor_path)
