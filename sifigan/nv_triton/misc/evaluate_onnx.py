@@ -14,7 +14,7 @@ def evaluate_onnx_main(onnx_model_path: str, test_tensor_path: str):
     outputs = ort_session.run(None, {"INPUT__0": input_data.in_signal,
                                      "INPUT__1": input_data.c,
                                      "INPUT__2": input_data.dfs,
-                                     "INPUT__3": input_data.true_lengths})
+                                     "INPUT__3": input_data.true_length})
     print(outputs)
 
     # jit_output = jit_model(input_data.in_signal, input_data.c, input_data.dfs, input_data.true_length)
