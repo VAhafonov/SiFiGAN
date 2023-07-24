@@ -52,3 +52,12 @@ def read_and_preprocess_test_tensors(test_tensor_path: str, do_read_output_tenso
         return input_data, OutputData(y)
 
     return input_data
+
+
+def parse_bool(val: str) -> bool:
+    lower = val.lower()
+    if lower == 'true':
+        return True
+    elif lower == 'false':
+        return False
+    raise ValueError('Invalid boolean: ' + val)
