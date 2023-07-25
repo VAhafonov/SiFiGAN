@@ -78,12 +78,9 @@ def create_triton_client() -> grpcclient.InferenceServerClient:
 
 
 def prepare_input_data(in_signal: np.ndarray,
-                       c: np.ndarray, dfs: List[np.ndarray]) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+                       c: np.ndarray, dfs: List[np.ndarray]) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     c = np.expand_dims(np.transpose(c, (1, 0)), axis=0)
     dfs = [np.expand_dims(np.expand_dims(df, axis=0), axis=0) for df in dfs]
-
-    # do trick to support dynamic sized denses without using list in model
-    true_lengths = np.zeros((in_signal.shape[0], len(dfs)), dtype=np.int64)
 
     max_length = - 1
     for df in dfs:
@@ -92,7 +89,6 @@ def prepare_input_data(in_signal: np.ndarray,
 
     for idx, df in enumerate(dfs):
         offset = max_length - df.shape[-1]
-        true_lengths[:, idx] = df.shape[-1]
         if offset == 0:
             continue
         dfs[idx] = np.concatenate([df, np.zeros((*df.shape[:-1], offset), dtype=df.dtype)], axis=-1)
@@ -100,23 +96,21 @@ def prepare_input_data(in_signal: np.ndarray,
     # cat across 1-st axis
     dfs = np.concatenate(dfs, axis=1)
 
-    return in_signal, c, dfs, true_lengths
+    return in_signal, c, dfs
 
 
-def prepare_input_and_outputs_for_prediction(in_signal, c, dfs, true_lengths):
+def prepare_input_and_outputs_for_prediction(in_signal, c, dfs):
     # Infer
     inputs = []
     outputs = []
     inputs.append(grpcclient.InferInput('INPUT__0', list(in_signal.shape), "FP32"))
     inputs.append(grpcclient.InferInput('INPUT__1', list(c.shape), "FP32"))
     inputs.append(grpcclient.InferInput('INPUT__2', list(dfs.shape), "FP32"))
-    inputs.append(grpcclient.InferInput('INPUT__3', list(true_lengths.shape), "INT64"))
 
     # Initialize the data
     inputs[0].set_data_from_numpy(in_signal.astype(np.float32))
     inputs[1].set_data_from_numpy(c.astype(np.float32))
     inputs[2].set_data_from_numpy(dfs.astype(np.float32))
-    inputs[3].set_data_from_numpy(true_lengths)
 
     outputs.append(grpcclient.InferRequestedOutput('OUTPUT__0'))
 
@@ -170,9 +164,9 @@ def decode_main(input_dir: str, output_dir: str, path_to_config: str) -> None:
                     in_signal = signal_generator(f0)
                     in_signal = in_signal.numpy()
 
-                in_signal, c, dfs, true_lengths = prepare_input_data(in_signal, c, dfs)
+                in_signal, c, dfs = prepare_input_data(in_signal, c, dfs)
 
-                inputs, outputs = prepare_input_and_outputs_for_prediction(in_signal, c, dfs, true_lengths)
+                inputs, outputs = prepare_input_and_outputs_for_prediction(in_signal, c, dfs)
 
                 # Test with outputs
                 start = time()
