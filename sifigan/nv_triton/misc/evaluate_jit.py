@@ -11,7 +11,7 @@ def evaluate_jit_main(jit_model_path: str, test_tensor_path: str, fp16: bool = F
     jit_model = torch.jit.load(jit_model_path)
     # load test data
     input_data, output_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=True,
-                                                               do_convert_to_cuda=False, fp16=fp16)
+                                                               do_convert_to_cuda=True, fp16=fp16)
     # predict
     jit_output = jit_model(input_data.in_signal, input_data.c, input_data.dfs)
 
