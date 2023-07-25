@@ -31,7 +31,7 @@ def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_p
                           "INPUT__0": {0: "batch_size", 2: "input_dim_0_2"},
                           "INPUT__1": {0: "batch_size",  2: "input_dim_1_2"},
                           "INPUT__2": {0: "batch_size",  2: "input_dim_2_2"},
-                          "OUTPUT__0": {0: "batch_size", 1: "output_dim_0_1"},
+                          "OUTPUT__0": {0: "batch_size", 2: "output_dim_0_2"},
                       },
                       verbose=False,
                       export_params=True
