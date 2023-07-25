@@ -17,8 +17,14 @@ def evaluate_jit_main(jit_model_path: str, test_tensor_path: str, fp16: bool = F
     jit_output = jit_model(input_data.in_signal, input_data.c, input_data.dfs)
 
     # compare tensors
-    jit_output_np = jit_output.detach().numpy()
-    target_output = output_data.y.numpy()
+    jit_output_np = jit_output.detach()
+    if jit_output_np.device != 'cpu':
+        jit_output_np = jit_output_np.cpu()
+    jit_output_np = jit_output_np.numpy()
+    target_output = output_data.y
+    if target_output.device != 'cpu':
+        target_output = target_output.cpu()
+    target_output = target_output.numpy()
     if fp16:
         # convert jit output back to float32
         jit_output_np = jit_output_np.astype(np.float32)
