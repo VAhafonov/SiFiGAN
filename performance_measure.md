@@ -12,9 +12,9 @@ sudo docker run --gpus=1 --rm --net=host -p8000:8000 -p8001:8001 -p8002:8002 \
 ```
 
 2. Open new terminal to run performance analyzing request
-```console
-cd sifigan/nv_triton/client
-perf_analyzer -m sifigan --input-data measurement_data/real_data_fp32.json
+```bash
+$ cd sifigan/nv_triton/client
+$ perf_analyzer -m sifigan --input-data measurement_data/real_data_fp32.json
 ```
 You will get output that looks like this
 ```console
