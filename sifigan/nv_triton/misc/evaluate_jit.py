@@ -9,6 +9,7 @@ from sifigan.nv_triton.misc.utils_funcs import read_and_preprocess_test_tensors,
 def evaluate_jit_main(jit_model_path: str, test_tensor_path: str, fp16: bool = False):
     # load model
     jit_model = torch.jit.load(jit_model_path)
+    jit_model.cuda()
     # load test data
     input_data, output_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=True,
                                                                do_convert_to_cuda=True, fp16=fp16)
