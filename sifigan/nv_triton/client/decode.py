@@ -117,7 +117,7 @@ def prepare_input_and_outputs_for_prediction(in_signal, c, dfs):
     return inputs, outputs
 
 
-def decode_main(input_dir: str, output_dir: str, path_to_config: str) -> None:
+def decode_main(input_dir: str, output_dir: str, path_to_config: str, model_name: str) -> None:
     """Run decoding process."""
 
     config = read_yaml_config(path_to_config)
@@ -170,7 +170,7 @@ def decode_main(input_dir: str, output_dir: str, path_to_config: str) -> None:
 
                 # Test with outputs
                 start = time()
-                results = triton_client.infer(model_name='sifigan-pt-fp32',
+                results = triton_client.infer(model_name=model_name,
                                               inputs=inputs,
                                               outputs=outputs,
                                               headers={'test': '1'})
@@ -194,10 +194,12 @@ def decode_main(input_dir: str, output_dir: str, path_to_config: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_dir", type=str, help="Path where input files for feature extraction are located.")
-    parser.add_argument("--output_dir", type=str, help="Path where extracted features will be located.")
-    parser.add_argument("--path_to_config", type=str, default="configs/decode_default.yaml",
+    parser.add_argument("-i", "--input_dir", type=str,
+                        help="Path where input files for feature extraction are located.")
+    parser.add_argument("-o", "--output_dir", type=str, help="Path where extracted features will be located.")
+    parser.add_argument("-c", "--path_to_config", type=str, default="configs/decode_default.yaml",
                         help="path to config with params related to feature extraction")
+    parser.add_argument("-m", "--model", choices=['sifigan-pt-fp32'], help="choose model for inference")
     args_ = parser.parse_args()
 
-    decode_main(args_.input_dir, args_.output_dir, args_.path_to_config)
+    decode_main(args_.input_dir, args_.output_dir, args_.path_to_config, args_.model)
