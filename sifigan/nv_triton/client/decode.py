@@ -170,7 +170,7 @@ def decode_main(input_dir: str, output_dir: str, path_to_config: str) -> None:
 
                 # Test with outputs
                 start = time()
-                results = triton_client.infer(model_name='sifigan',
+                results = triton_client.infer(model_name='sifigan-pt-fp32',
                                               inputs=inputs,
                                               outputs=outputs,
                                               headers={'test': '1'})
