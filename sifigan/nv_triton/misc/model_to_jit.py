@@ -10,7 +10,7 @@ from sifigan.nv_triton.misc.utils_funcs import remove_weight_norm, parse_bool
 def convert_and_save_as_jit(checkpoint_path: str, save_path: str or None, fp16: bool = False):
     model = SiFiGANGenerator(in_channels=43, out_channels=1, channels=512, kernel_size=7,
                              upsample_scales=[5, 4, 3, 2], upsample_kernel_sizes=[10, 8, 6, 4])
-    state_dict = torch.load(checkpoint_path, map_location='cpu')
+    state_dict = torch.load(checkpoint_path)
     model.load_state_dict(state_dict['model']['generator'])
     model.eval()
     remove_weight_norm(model)
