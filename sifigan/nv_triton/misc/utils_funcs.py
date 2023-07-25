@@ -29,13 +29,19 @@ class OutputData(NamedTuple):
 
 
 def read_and_preprocess_test_tensors(test_tensor_path: str, do_read_output_tensor: bool = False,
-                                     do_convert_to_cuda: bool = False) -> InputData or Tuple[InputData, OutputData]:
+                                     do_convert_to_cuda: bool = False,
+                                     fp16: bool = False) -> InputData or Tuple[InputData, OutputData]:
     dict_ = torch.load(test_tensor_path, map_location='cpu')
 
     in_signal = dict_['in_signal']
     c = dict_['c']
     dfs = dict_['dfs']
     true_length = dict_['true_lengths']
+    if fp16:
+        in_signal = in_signal.half()
+        c = c.half()
+        dfs = dfs.half()
+        true_length = true_length.half()
 
     if do_convert_to_cuda:
         in_signal = in_signal.cuda()
