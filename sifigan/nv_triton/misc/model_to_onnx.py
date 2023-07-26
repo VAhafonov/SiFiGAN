@@ -18,7 +18,7 @@ def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_p
     remove_weight_norm(model)
     input_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=False,
                                                   do_convert_to_cuda=True)
-    in_signal, c, dfs, _ = input_data
+    in_signal, c, dfs = input_data
 
     print("Start onnx export")
     start_time = time.time()
