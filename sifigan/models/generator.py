@@ -505,7 +505,7 @@ class SiFiGANGenerator(nn.Module):
         #     for j, fn_block in enumerate(module_list_block):
         #         cs += fn_block(c)
         #     c = cs / self.num_proc_blocks
-        c = self.fn["output_conv"](c.half()).float()
+        c = self.fn["output_conv"](c)
 
         return c #, e_
 
@@ -543,9 +543,6 @@ class SiFiGANGenerator(nn.Module):
 
         self.fn["blocks"] = filter_network
         del self.fn["upsamples"]
-
-        # try half precision
-        self.fn["output_conv"].half()
 
 
     def remove_weight_norm(self):
