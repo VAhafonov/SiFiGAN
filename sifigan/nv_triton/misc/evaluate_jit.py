@@ -28,10 +28,15 @@ def evaluate_jit_main(jit_model_path: str, test_tensor_path: str, fp16: bool = F
     if fp16:
         # convert jit output back to float32
         jit_output_np = jit_output_np.astype(np.float32)
+    jit_output_np = ~np.isnan(jit_output_np)
+    target_output[~np.isnan(target_output)] = ~np.isnan(target_output[~np.isnan(target_output)])
     are_tensors_equal = np.allclose(jit_output_np, target_output, equal_nan=True, atol=1e-5)
     print("Tensors are equal:", are_tensors_equal)
-    print("Max diff in tensors:",
-          np.max(np.abs(jit_output_np[~np.isnan(jit_output_np)] - target_output[~np.isnan(target_output)])))
+    diff = np.abs(jit_output_np - target_output)
+    print("Max diff in tensors:", np.max(diff))
+    print("Mean diff in tensors:", np.mean(diff))
+    print("Man signal in target tensor:", np.mean(target_output))
+    print("Man signal in predicted tensor:", np.mean(jit_output_np))
 
 
 if __name__ == '__main__':
