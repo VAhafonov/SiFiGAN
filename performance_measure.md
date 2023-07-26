@@ -87,5 +87,43 @@ Request concurrency: 1
 Inferences/Second vs. Client Average Batch Latency
 Concurrency: 1, throughput: 21.4984 infer/sec, latency 46509 usec
 ```
-``` 21.4984 infer/sec ``` is our new value of metric. Which is 8% faster than ``` 19.8874 infer/sec ``` from 
+``` 21.4984 infer/sec ``` is our new value of our metric. Which is 8% faster than ``` 19.8874 infer/sec ``` from 
 initial measurement.
+
+## Try to use onnx backend
+After conversation to onnx and introduction onnx model as a new model in triton server, we can do perf_analyzer 
+request to that model.
+```bash
+$ perf_analyzer -m sifigan-onnx-fp32 --input-data measurement_data/real_data_fp32.json
+```
+We get following results
+```console
+Successfully read data for 1 stream/streams with 1 step/steps.
+*** Measurement Settings ***
+  Batch size: 1
+  Service Kind: Triton
+  Using "time_windows" mode for stabilization
+  Measurement window: 5000 msec
+  Using synchronous calls for inference
+  Stabilizing using average latency
+
+Request concurrency: 1
+  Client:
+    Request count: 319
+    Throughput: 17.7209 infer/sec
+    Avg latency: 56357 usec (standard deviation 765 usec)
+    p50 latency: 56240 usec
+    p90 latency: 57415 usec
+    p95 latency: 57779 usec
+    p99 latency: 58384 usec
+    Avg HTTP time: 56350 usec (send/recv 375 usec + response wait 55975 usec)
+  Server:
+    Inference count: 319
+    Execution count: 319
+    Successful request count: 319
+    Avg request latency: 54388 usec (overhead 25 usec + queue 26 usec + compute input 383 usec + compute infer 53893 usec + compute output 60 usec)
+
+Inferences/Second vs. Client Average Batch Latency
+Concurrency: 1, throughput: 17.7209 infer/sec, latency 56357 usec
+```
+We see ```17.7209 infer/sec``` value and can conclude that onnx is much slower than jit. 
