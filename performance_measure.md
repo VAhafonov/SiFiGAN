@@ -48,3 +48,6 @@ Concurrency: 1, throughput: 19.8874 infer/sec, latency 50272 usec
 ```
 
 ``` 19.8874 infer/sec ``` is our target performance metric. We will try to improve it via different techniques.
+</br>
+This measure is valid for https://github.com/VAhafonov/SiFiGAN/tree/1b530dad16dd5c64302e796cfe24ecf7a0d934e8 state of 
+repository.
