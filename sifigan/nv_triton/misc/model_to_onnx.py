@@ -16,6 +16,7 @@ def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_p
     model.eval()
     model.cuda()
     remove_weight_norm(model)
+    model.apply_layer_tweaks()
     input_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=False,
                                                   do_convert_to_cuda=True)
     in_signal, c, dfs = input_data
