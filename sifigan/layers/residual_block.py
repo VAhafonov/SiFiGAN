@@ -22,12 +22,6 @@ from sifigan.utils import index_initial, pd_indexing, index_initial_for_jit
 # A logger for this file
 logger = getLogger(__name__)
 
-# add ModuleInterface
-@torch.jit.interface
-class ModuleInterface(torch.nn.Module):
-    def forward(self, input: torch.Tensor) -> torch.Tensor: # `input` has a same name in Sequential forward
-        pass
-
 
 class Conv1d(nn.Conv1d):
     """Conv1d module with customized initialization."""
@@ -155,9 +149,8 @@ class ResidualBlock(nn.Module):
             Tensor: Output tensor (B, channels, T).
 
         """
-        for idx in range(len(self.convs1)):
-            submodule: ModuleInterface = self.convs1[idx]
-            xt = submodule.forward(input)
+        for idx, layer in enumerate(self.convs1):
+            xt = layer(input)
             # if self.use_additional_convs:
             #     submodule1: ModuleInterface = self.convs2[idx]
             #     xt = submodule1.forward(xt)
@@ -255,21 +248,21 @@ class AdaptiveResidualBlock(nn.Module):
             Tensor: Output tensor (B, channels, T).
 
         """
-        for i, dilation in enumerate(self.dilations):
+        for i, (nonlin_layer, convsc_layer, convsp_layer, convsf_layer, convsa_layer) in enumerate(zip(self.nonlinears,
+                                                                                                       self.convsC,
+                                                                                                       self.convsP,
+                                                                                                       self.convsF,
+                                                                                                       self.convsA)):
             assert isinstance(i, int)
-            submodule: ModuleInterface = self.nonlinears[i]
-            xt = submodule.forward(x)
+            xt = nonlin_layer(x)
 
+            dilation = self.dilations[i]
             assert isinstance(dilation, int)
             xP, xF = pd_indexing(xt, d, dilation)
 
-            submodule1: ModuleInterface = self.convsC[i]
-            submodule2: ModuleInterface = self.convsP[i]
-            submodule3: ModuleInterface = self.convsF[i]
-            xt = submodule1.forward(xt) + submodule2.forward(xP) + submodule3.forward(xF)
+            xt = convsc_layer(xt) + convsp_layer(xP) + convsf_layer(xF)
 
             if self.use_additional_convs:
-                submodule4: ModuleInterface = self.convsA[i]
-                xt = submodule4.forward(xt)
+                xt = convsa_layer(xt)
             x = xt + x
         return x

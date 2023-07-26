@@ -13,12 +13,13 @@ References:
 """
 
 from logging import getLogger
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import torch
 import torch.nn as nn
-from sifigan.layers import AdaptiveResidualBlock, Conv1d, ResidualBlock, ModuleInterface
+from sifigan.layers import AdaptiveResidualBlock, Conv1d, ResidualBlock
+from sifigan.layers.layers_for_inference import FilterNetwork
 
 # A logger for this file
 logger = getLogger(__name__)
@@ -474,38 +475,36 @@ class SiFiGANGenerator(nn.Module):
         # source-network forward
         x = self.sn["emb"](x)
         embs = [x]
-        for i in range(self.num_upsamples - 1):
-            submodule_down: ModuleInterface = self.sn["downsamples"][i]
-            x = submodule_down.forward(x)
+        for i, down_layer in enumerate(self.sn['downsamples']):
+            x = down_layer(x)
             embs += [x]
-        for i, layer in enumerate(self.sn["blocks"]):
+        for i, (layer_block, layer_up) in enumerate(zip(self.sn["blocks"], self.sn["upsamples"])):
             # excitation generation network
-            submodule_up: ModuleInterface = self.sn["upsamples"][i]
-            e = submodule_up.forward(e) + embs[-i - 1]
-            e = layer(e, d[i])
+            e = layer_up(e) + embs[-i - 1]
+            e = layer_block(e, d[i])
         # e_ = self.sn["output_conv"](e)
 
         # filter-network forward
-        embs = [e]
-        for i in range(self.num_upsamples - 1):
+        embs: List[torch.Tensor] = [e]
+        for i, layer_down in enumerate(self.fn["downsamples"]):
             # if self.share_downsamples:
             #     e = self.sn["downsamples"][i](e)
             # else:
-            submodule_down: ModuleInterface = self.fn["downsamples"][i]
-            e = submodule_down.forward(e)
+            e = layer_down(e)
             embs += [e]
-        for i in range(self.num_upsamples):
-            # resonance filtering network
-            # if self.share_upsamples:
-            #     c = self.sn["upsamples"][i](c) + embs[-i - 1]
-            # else:
-            submodule1_up: ModuleInterface = self.fn["upsamples"][i]
-            c = submodule1_up.forward(c) + embs[-i - 1]
-            cs = torch.zeros(c.shape, dtype=c.dtype, device=c.device)  # initialize
-            for j in range(self.num_proc_blocks):
-                submodule_fn_block: ModuleInterface = self.fn["blocks"][i * self.num_proc_blocks + j]
-                cs += submodule_fn_block.forward(c)
-            c = cs / self.num_proc_blocks
+        assert len(embs) == 4
+        input: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor] = (c, embs[0], embs[1], embs[2], embs[3])
+        c = self.fn["blocks"].forward(input)
+        # for i, (fn_up_layer, module_list_block) in enumerate(zip(self.fn["upsamples"], self.fn["blocks"])):
+        #     # resonance filtering network
+        #     # if self.share_upsamples:
+        #     #     c = self.sn["upsamples"][i](c) + embs[-i - 1]
+        #     # else:
+        #     c = fn_up_layer(c) + embs[-i - 1]
+        #     cs = torch.zeros(c.shape, dtype=c.dtype, device=c.device)  # initialize
+        #     for j, fn_block in enumerate(module_list_block):
+        #         cs += fn_block(c)
+        #     c = cs / self.num_proc_blocks
         c = self.fn["output_conv"](c)
 
         return c #, e_
@@ -524,6 +523,27 @@ class SiFiGANGenerator(nn.Module):
                 logger.debug(f"Reset parameters in {m}.")
 
         self.apply(_reset_parameters)
+
+    def apply_layer_tweaks(self):
+        self.sn["downsamples"] = self.sn["downsamples"][:-1]
+
+        self.fn["downsamples"] = self.fn["downsamples"][:-1]
+        module_list = []
+        for i in range(self.num_upsamples):
+            module_list.append(self.fn["blocks"][i * self.num_proc_blocks:(i + 1) * self.num_proc_blocks])
+        filter_network = FilterNetwork(first_upsample=self.fn["upsamples"][0],
+                                       second_upsample=self.fn["upsamples"][1],
+                                       third_upsample=self.fn["upsamples"][2],
+                                       fourth_upsample=self.fn["upsamples"][3],
+                                       first_process_block=module_list[0],
+                                       second_process_block=module_list[1],
+                                       third_process_block=module_list[2],
+                                       fourth_process_block=module_list[3]
+                                       )
+
+        self.fn["blocks"] = filter_network
+        del self.fn["upsamples"]
+
 
     def remove_weight_norm(self):
         """Remove weight normalization module from all of the layers."""

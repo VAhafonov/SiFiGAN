@@ -15,6 +15,7 @@ def convert_and_save_as_jit(checkpoint_path: str, save_path: str or None, fp16: 
     model.load_state_dict(state_dict['model']['generator'])
     model.eval()
     remove_weight_norm(model)
+    model.apply_layer_tweaks()
     if fp16:
         model = model.half()
     print("Start tracing model")

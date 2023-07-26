@@ -56,6 +56,7 @@ def main(config: DictConfig) -> None:
     model = hydra.utils.instantiate(config.generator)
     model.load_state_dict(state_dict["model"]["generator"])
     model.remove_weight_norm()
+    model.apply_layer_tweaks()
     model.eval().to(device)
 
     # check directory existence
