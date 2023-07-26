@@ -29,7 +29,7 @@ def evaluate_jit_main(jit_model_path: str, test_tensor_path: str, fp16: bool = F
         # convert jit output back to float32
         jit_output_np = jit_output_np.astype(np.float32)
     jit_output_np = jit_output_np[~np.isnan(jit_output_np)]
-    target_output = jit_output_np[~np.isnan(target_output)]
+    target_output = target_output[~np.isnan(target_output)]
     are_tensors_equal = np.allclose(jit_output_np, target_output, equal_nan=True, atol=1e-5)
     print("Tensors are equal:", are_tensors_equal)
     diff = np.abs(jit_output_np - target_output)
