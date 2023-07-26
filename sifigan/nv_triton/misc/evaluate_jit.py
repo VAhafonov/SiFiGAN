@@ -9,10 +9,10 @@ from sifigan.nv_triton.misc.utils_funcs import read_and_preprocess_test_tensors,
 def evaluate_jit_main(jit_model_path: str, test_tensor_path: str, fp16: bool = False):
     # load model
     jit_model = torch.jit.load(jit_model_path)
-    jit_model.cuda()
+    # jit_model.cuda()
     # load test data
     input_data, output_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=True,
-                                                               do_convert_to_cuda=True, fp16=fp16)
+                                                               do_convert_to_cuda=False, fp16=fp16)
     # predict
     jit_output = jit_model(input_data.in_signal, input_data.c, input_data.dfs)
 
@@ -28,8 +28,8 @@ def evaluate_jit_main(jit_model_path: str, test_tensor_path: str, fp16: bool = F
     if fp16:
         # convert jit output back to float32
         jit_output_np = jit_output_np.astype(np.float32)
-    jit_output_np = ~np.isnan(jit_output_np)
-    target_output[~np.isnan(target_output)] = ~np.isnan(target_output[~np.isnan(target_output)])
+    jit_output_np = jit_output_np[~np.isnan(jit_output_np)]
+    target_output = jit_output_np[~np.isnan(target_output)]
     are_tensors_equal = np.allclose(jit_output_np, target_output, equal_nan=True, atol=1e-5)
     print("Tensors are equal:", are_tensors_equal)
     diff = np.abs(jit_output_np - target_output)
