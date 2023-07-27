@@ -181,7 +181,7 @@ Request concurrency: 1
 Inferences/Second vs. Client Average Batch Latency
 Concurrency: 1, throughput: 27.9424 infer/sec, latency 35747 usec
 ```
-We see ``` 27.9424 infer/sec``` value that is 30% faster than jit model.
+We see ```27.9424 infer/sec``` value that is 30% faster than jit model.
 
 ## Try to use half precision(FP16) inference
 I've generated jit model in fp16 mode, served it via nv-triton and made decoding.
@@ -264,3 +264,41 @@ Inferences/Second vs. Client Average Batch Latency
 Concurrency: 1, throughput: 36.8306 infer/sec, latency 27156 usec
 ```
 We see ```36.8306 infer/sec``` value and can conclude that onnx is slower than jit in the same mode. 
+
+## TensorRT backend in FP16 mode
+Run performance analyzing for TensorRT model with static shape the same as in the FP32 mode. <br>
+Let's try to analyze performance of TensorRT FP16 model.
+```bash
+$ perf_analyzer -m sifigan-trt-fp16 --input-data measurement_data/real_data_fp16.json
+```
+We get following results
+```console
+ Successfully read data for 1 stream/streams with 1 step/steps.
+*** Measurement Settings ***
+  Batch size: 1
+  Service Kind: Triton
+  Using "time_windows" mode for stabilization
+  Measurement window: 5000 msec
+  Using synchronous calls for inference
+  Stabilizing using average latency
+
+Request concurrency: 1
+  Client:
+    Request count: 1146
+    Throughput: 63.6623 infer/sec
+    Avg latency: 15703 usec (standard deviation 3838 usec)
+    p50 latency: 15479 usec
+    p90 latency: 15727 usec
+    p95 latency: 15837 usec
+    p99 latency: 22588 usec
+    Avg HTTP time: 15698 usec (send/recv 169 usec + response wait 15529 usec)
+  Server:
+    Inference count: 1146
+    Execution count: 1146
+    Successful request count: 1146
+    Avg request latency: 14682 usec (overhead 24 usec + queue 26 usec + compute input 250 usec + compute infer 14292 usec + compute output 90 usec)
+
+Inferences/Second vs. Client Average Batch Latency
+Concurrency: 1, throughput: 63.6623 infer/sec, latency 15703 usec
+```
+We see ```63.6623 infer/sec``` which is 64% faster than jit FP16 and 128% faster than TensorRT FP32 with static shape.
