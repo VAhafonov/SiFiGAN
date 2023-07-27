@@ -181,4 +181,50 @@ Request concurrency: 1
 Inferences/Second vs. Client Average Batch Latency
 Concurrency: 1, throughput: 27.9424 infer/sec, latency 35747 usec
 ```
-We see ``` 27.9424 infer/sec``` value that is 30% faster than jit model. 
+We see ``` 27.9424 infer/sec``` value that is 30% faster than jit model.
+
+## Try to use half precision(FP16) inference
+I've generated jit model in fp16 mode, served it via nv-triton and made decoding.
+I've seen that model output from jit in fp32 and jit in fp16 have difference in values. But 
+according to my ears wav from these tensors sound same or almost same. 
+I am sure that there is some metric that can tell us how much two sounds are 
+similar (like audio fingerprint or like structural metrics in image processing - SSIM or gradient metric). 
+Unfortunately I don't have enough time to research and implement this kind of metric. <br>
+I have repository with test sounds generated from different serving models(pt-fp32, pt-16)
+you can compare them. https://github.com/VAhafonov/sounds <br>
+Lets try to analyze performance of jit FP16 model.
+```bash
+$ cd sifigan/nv_triton/client
+$ perf_analyzer -m sifigan-pt-fp16 --input-data measurement_data/real_data_fp16.json
+```
+We get following results
+```console
+ Successfully read data for 1 stream/streams with 1 step/steps.
+*** Measurement Settings ***
+  Batch size: 1
+  Service Kind: Triton
+  Using "time_windows" mode for stabilization
+  Measurement window: 5000 msec
+  Using synchronous calls for inference
+  Stabilizing using average latency
+
+Request concurrency: 1
+  Client:
+    Request count: 700
+    Throughput: 38.8862 infer/sec
+    Avg latency: 25709 usec (standard deviation 1128 usec)
+    p50 latency: 25594 usec
+    p90 latency: 25823 usec
+    p95 latency: 25896 usec
+    p99 latency: 26224 usec
+    Avg HTTP time: 25703 usec (send/recv 186 usec + response wait 25517 usec)
+  Server:
+    Inference count: 700
+    Execution count: 700
+    Successful request count: 700
+    Avg request latency: 24624 usec (overhead 28 usec + queue 22 usec + compute input 237 usec + compute infer 24279 usec + compute output 57 usec)
+
+Inferences/Second vs. Client Average Batch Latency
+Concurrency: 1, throughput: 38.8862 infer/sec, latency 25709 usec
+```
+We see ``` 38.8862 infer/sec``` which is 81% faster then jit FP32 and 40% faster than TensorRT FP32 with static shape.
