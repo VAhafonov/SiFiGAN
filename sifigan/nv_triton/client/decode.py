@@ -210,7 +210,8 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output_dir", type=str, help="Path where extracted features will be located.")
     parser.add_argument("-c", "--path_to_config", type=str, default="configs/decode_default.yaml",
                         help="path to config with params related to feature extraction")
-    parser.add_argument("-m", "--model", choices=['sifigan-pt-fp32', 'sifigan-onnx-fp32', 'sifigan-pt-fp16'],
+    parser.add_argument("-m", "--model", choices=['sifigan-pt-fp32', 'sifigan-onnx-fp32',
+                                                  'sifigan-pt-fp16', 'sifigan-onnx-fp16'],
                         help="choose model for inference")
     args_ = parser.parse_args()
 
