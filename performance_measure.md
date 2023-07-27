@@ -127,3 +127,47 @@ Inferences/Second vs. Client Average Batch Latency
 Concurrency: 1, throughput: 17.7209 infer/sec, latency 56357 usec
 ```
 We see ```17.7209 infer/sec``` value and can conclude that onnx is much slower than jit. 
+
+## Try to use TensorRT backend
+I've been able to convert SiFiGAN model to TensorRT plan and serve it via nvidia-triton but only in 
+static shape mode. <br>
+So I've generated TensorRT plan for static shape that is equal to shape of my testing tensor for 
+performance measurement. <br> <br>
+I am sure that this way with serving TensorRT with static shape could be useful in real production.
+You just have to choose optimal shape and implement algorithm for smart dividing input data of any shape 
+to your target static shape and smart merging networks output back to original shape. <br> <br>
+Lest see performance of TensorRT model.
+```bash
+$ perf_analyzer -m sifigan-trt-fp32 --input-data measurement_data/real_data_fp32.json
+```
+We get following results
+```console
+Successfully read data for 1 stream/streams with 1 step/steps.
+*** Measurement Settings ***
+  Batch size: 1
+  Service Kind: Triton
+  Using "time_windows" mode for stabilization
+  Measurement window: 5000 msec
+  Using synchronous calls for inference
+  Stabilizing using average latency
+
+Request concurrency: 1
+  Client:
+    Request count: 503
+    Throughput: 27.9424 infer/sec
+    Avg latency: 35747 usec (standard deviation 5663 usec)
+    p50 latency: 35316 usec
+    p90 latency: 36146 usec
+    p95 latency: 36391 usec
+    p99 latency: 40187 usec
+    Avg HTTP time: 35738 usec (send/recv 444 usec + response wait 35294 usec)
+  Server:
+    Inference count: 503
+    Execution count: 503
+    Successful request count: 503
+    Avg request latency: 33540 usec (overhead 29 usec + queue 26 usec + compute input 504 usec + compute infer 32822 usec + compute output 158 usec)
+
+Inferences/Second vs. Client Average Batch Latency
+Concurrency: 1, throughput: 27.9424 infer/sec, latency 35747 usec
+```
+We see ``` 27.9424 infer/sec``` value that is 30% faster than jit model. 
