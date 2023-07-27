@@ -6,7 +6,7 @@ import tensorrt as trt
 from sifigan.nv_triton.misc.utils_funcs import parse_bool
 
 
-def onnx_to_tensorrt_main(onnx_model_path: str, trt_model_pah: str, fp16: bool):
+def onnx_to_tensorrt_main(onnx_model_path: str, trt_model_pah: str, fp16: bool, use_dynamic_shape: bool = False):
 
     print("making plan for", onnx_model_path)
 
@@ -20,12 +20,13 @@ def onnx_to_tensorrt_main(onnx_model_path: str, trt_model_pah: str, fp16: bool):
     config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1024 * 1024 * 1024 * 12)  # 12 gigs
     config.set_flag(trt.BuilderFlag.DISABLE_TIMING_CACHE)
 
-    # Create an optimization profile for dynamic input shapes
-    profile = builder.create_optimization_profile()
-    profile.set_shape("INPUT__0", (1, 1, 75240), (1, 1, 75240), (1, 1, 75240))
-    profile.set_shape("INPUT__1", (1, 43, 627), (1, 43, 627), (1, 43, 627))
-    profile.set_shape("INPUT__2", (1, 4, 75240), (1, 4, 75240), (1, 4, 75240))
-    config.add_optimization_profile(profile)
+    if use_dynamic_shape:
+        # Create an optimization profile for dynamic input shapes
+        profile = builder.create_optimization_profile()
+        profile.set_shape("INPUT__0", (1, 1, 75240), (1, 1, 75240), (1, 1, 75240))
+        profile.set_shape("INPUT__1", (1, 43, 627), (1, 43, 627), (1, 43, 627))
+        profile.set_shape("INPUT__2", (1, 4, 75240), (1, 4, 75240), (1, 4, 75240))
+        config.add_optimization_profile(profile)
     print(config)
 
     parser = trt.OnnxParser(network, logger)
@@ -44,5 +45,7 @@ if __name__ == '__main__':
     parser.add_argument("onnx_models_path", type=str)
     parser.add_argument("trt_models_dir", type=str)
     parser.add_argument("--fp16", type=str, default='false')
+    parser.add_argument("--use_dynamic_shape", type=str, default='true')
     _args = parser.parse_args()
-    onnx_to_tensorrt_main(_args.onnx_models_path, _args.trt_models_dir, parse_bool(_args.fp16))
+    onnx_to_tensorrt_main(_args.onnx_models_path, _args.trt_models_dir,
+                          parse_bool(_args.fp16), parse_bool(_args.use_dynamic_shape))
