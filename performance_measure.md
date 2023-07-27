@@ -3,7 +3,7 @@
 ## Metodology
 Steps to reproduce:
 1. Run nvidia triton server from repo root dir
-```console
+```bash
 sudo docker run --gpus=1 --rm --net=host -p8000:8000 -p8001:8001 -p8002:8002 \ 
 -v ${PWD}/sifigan/nv_triton/server/model-repository:/models nvcr.io/nvidia/tritonserver:23.06-py3 tritonserver \ 
 --model-repository=/models
@@ -11,8 +11,8 @@ sudo docker run --gpus=1 --rm --net=host -p8000:8000 -p8001:8001 -p8002:8002 \
 
 2. Open new terminal to run performance analyzing request
 ```bash
-$ cd sifigan/nv_triton/client
-$ perf_analyzer -m <model-name> --input-data <path-to-file-with-real-data>
+cd sifigan/nv_triton/client
+perf_analyzer -m <model-name> --input-data <path-to-file-with-real-data>
 ```
 As file with real data for FP32 inference we will use ```measurement_data/real_data_fp32.json```. <br>
 As file with real data for FP16 inference we will use ```measurement_data/real_data_fp16.json```.
@@ -20,8 +20,8 @@ As file with real data for FP16 inference we will use ```measurement_data/real_d
 ## Initial results
 Run this command.
 ```bash
-$ cd sifigan/nv_triton/client
-$ perf_analyzer -m sifigan-pt-fp32 --input-data measurement_data/real_data_fp32.json
+cd sifigan/nv_triton/client
+perf_analyzer -m sifigan-pt-fp32 --input-data measurement_data/real_data_fp32.json
 ```
 You will get output that looks like this
 ```console
@@ -54,7 +54,7 @@ Inferences/Second vs. Client Average Batch Latency
 Concurrency: 1, throughput: 19.8874 infer/sec, latency 50272 usec
 ```
 
-``` 19.8874 infer/sec ``` is our target performance metric. We will try to improve it via different techniques.
+```19.8874 infer/sec``` is our target performance metric. We will try to improve it via different techniques.
 </br>
 This measure is valid for https://github.com/VAhafonov/SiFiGAN/tree/1b530dad16dd5c64302e796cfe24ecf7a0d934e8 state of 
 repository.
@@ -62,11 +62,10 @@ repository.
 ## First tweak
 After tweak in architecture(get rid of ModuleNetInterface and index-based running of 
 nn.ModuleLists) from https://github.com/VAhafonov/SiFiGAN/commit/369bbfcdd1501e35b67fdaaf087f48195dfa4cf4 commit.
-</br>
+<br>
 Run this command.
 ```bash
-$ cd sifigan/nv_triton/client
-$ perf_analyzer -m sifigan-pt-fp32 --input-data measurement_data/real_data_fp32.json
+perf_analyzer -m sifigan-pt-fp32 --input-data measurement_data/real_data_fp32.json
 ```
 We get following results
 ```console
@@ -98,14 +97,14 @@ Request concurrency: 1
 Inferences/Second vs. Client Average Batch Latency
 Concurrency: 1, throughput: 21.4984 infer/sec, latency 46509 usec
 ```
-``` 21.4984 infer/sec ``` is our new value of our metric. Which is 8% faster than ``` 19.8874 infer/sec ``` from 
+```21.4984 infer/sec``` is our new value of our metric. Which is 8% faster than ```19.8874 infer/sec``` from 
 initial measurement.
 
 ## Try to use ONNX backend
 After conversation to onnx and introduction onnx model as a new model in triton server, we can do perf_analyzer 
 request to that model.
 ```bash
-$ perf_analyzer -m sifigan-onnx-fp32 --input-data measurement_data/real_data_fp32.json
+perf_analyzer -m sifigan-onnx-fp32 --input-data measurement_data/real_data_fp32.json
 ```
 We get following results
 ```console
@@ -142,12 +141,12 @@ We see ```17.7209 infer/sec``` value and can conclude that onnx is much slower t
 ## Try to use TensorRT backend
 I've been able to convert SiFiGAN model to TensorRT plan and serve it via nvidia-triton but only in 
 static shape mode. <br>
-So I've generated TensorRT plan for static shape that is equal to shape of my testing tensor for 
+So I've generated TensorRT plan for the static shape that is equal to the shape of my testing tensor for 
 performance measurement. <br> <br>
-I am sure that this way with serving TensorRT with static shape could be useful in real production.
-You just have to choose optimal shape and implement algorithm for smart dividing input data of any shape 
-to your target static shape and smart merging networks output back to original shape. <br> <br>
-Lest see performance of TensorRT model.
+I am sure that this way of serving TensorRT with static shape could be useful in real production.
+You just have to choose optimal shape and implement an algorithm for smart dividing input data of any shape 
+to your target static shape and smart merging networks output back to the original shape. <br> <br>
+Let's see performance of TensorRT model.
 ```bash
 $ perf_analyzer -m sifigan-trt-fp32 --input-data measurement_data/real_data_fp32.json
 ```
@@ -184,12 +183,12 @@ Concurrency: 1, throughput: 27.9424 infer/sec, latency 35747 usec
 We see ```27.9424 infer/sec``` value that is 30% faster than jit model.
 
 ## Try to use half precision(FP16) inference
-I've generated jit model in fp16 mode, served it via nv-triton and made decoding.
+I've generated jit model in fp16 mode, served it via nv-triton, and made decoding.
 I've seen that model output from jit in fp32 and jit in fp16 have difference in values. But 
-according to my ears wav from these tensors sound same or almost same. 
+according to my ears wav from these tensors sound the same or almost the same. 
 I am sure that there is some metric that can tell us how much two sounds are 
 similar (like audio fingerprint or like structural metrics in image processing - SSIM or gradient metric). 
-Unfortunately I don't have enough time to research and implement this kind of metric. <br>
+Unfortunately, I don't have enough time to research and implement this kind of metric. <br>
 I have repository with test sounds generated from different serving models(pt-fp32, pt-16)
 you can compare them. https://github.com/VAhafonov/sounds <br>
 Let's try to analyze performance of jit FP16 model.
