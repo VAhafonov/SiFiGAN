@@ -302,3 +302,21 @@ Inferences/Second vs. Client Average Batch Latency
 Concurrency: 1, throughput: 63.6623 infer/sec, latency 15703 usec
 ```
 We see ```63.6623 infer/sec``` which is 64% faster than jit FP16 and 128% faster than TensorRT FP32 with static shape.
+<br>
+
+# Conclusions
+After all measurement experiments I can do following conclusions:
+1. Inference in half-precision (FP16) mode is very efficient from the performance side. So in real production cases, 
+we have to use some kind of business metric to check this inference from the quality side. 
+If the quality will be not good then we could try to move part of the network to FP16  mode.
+2. Inference via TensorRT gives us a huge boost in performance. So in real production cases, we have to think about 
+the problem of dividing inputs with dynamic shape into few inputs with static shape and merging result tensors 
+into tensor of original shape.
+3. A combination of half-precision and TensorRT gives us almost a 3x performance boost, 
+which is very good in my opinion.
+
+#### P.S
+I've done these measures intentionally only from the network inference side. Because I've implemented the most 
+straightforward way of preparing data, feeding data into the network, and post-process data. 
+There is a lot of space for improvement from that side(parallel loading, parallel postprocessing, etc.). 
+But this will take much more time for calibration, measurement, and improvement.
