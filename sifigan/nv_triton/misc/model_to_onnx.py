@@ -26,7 +26,7 @@ def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_p
     torch.onnx.export(model,
                       args=(in_signal, c, dfs),
                       f=save_path,
-                      input_names=["INPUT__0", "INPUT__1", "INPUT__2", "INPUT__3"],
+                      input_names=["INPUT__0", "INPUT__1", "INPUT__2"],
                       output_names=["OUTPUT__0"],
                       dynamic_axes={
                           "INPUT__0": {0: "batch_size", 2: "input_dim_0_2"},
