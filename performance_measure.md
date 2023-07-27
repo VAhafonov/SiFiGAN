@@ -14,7 +14,8 @@ sudo docker run --gpus=1 --rm --net=host -p8000:8000 -p8001:8001 -p8002:8002 \
 $ cd sifigan/nv_triton/client
 $ perf_analyzer -m <model-name> --input-data <path-to-file-with-real-data>
 ```
-As file with real data for FP32 inference we will use ```measurement_data/real_data_fp32.json```.
+As file with real data for FP32 inference we will use ```measurement_data/real_data_fp32.json```. <br>
+As file with real data for FP16 inference we will use ```measurement_data/real_data_fp16.json```.
 
 ## Initial results
 Run this command.
