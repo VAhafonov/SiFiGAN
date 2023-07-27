@@ -194,7 +194,6 @@ I have repository with test sounds generated from different serving models(pt-fp
 you can compare them. https://github.com/VAhafonov/sounds <br>
 Lets try to analyze performance of jit FP16 model.
 ```bash
-$ cd sifigan/nv_triton/client
 $ perf_analyzer -m sifigan-pt-fp16 --input-data measurement_data/real_data_fp16.json
 ```
 We get following results
