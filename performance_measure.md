@@ -101,7 +101,7 @@ Concurrency: 1, throughput: 21.4984 infer/sec, latency 46509 usec
 ``` 21.4984 infer/sec ``` is our new value of our metric. Which is 8% faster than ``` 19.8874 infer/sec ``` from 
 initial measurement.
 
-## Try to use onnx backend
+## Try to use ONNX backend
 After conversation to onnx and introduction onnx model as a new model in triton server, we can do perf_analyzer 
 request to that model.
 ```bash
@@ -192,7 +192,7 @@ similar (like audio fingerprint or like structural metrics in image processing -
 Unfortunately I don't have enough time to research and implement this kind of metric. <br>
 I have repository with test sounds generated from different serving models(pt-fp32, pt-16)
 you can compare them. https://github.com/VAhafonov/sounds <br>
-Lets try to analyze performance of jit FP16 model.
+Let's try to analyze performance of jit FP16 model.
 ```bash
 $ perf_analyzer -m sifigan-pt-fp16 --input-data measurement_data/real_data_fp16.json
 ```
@@ -226,4 +226,41 @@ Request concurrency: 1
 Inferences/Second vs. Client Average Batch Latency
 Concurrency: 1, throughput: 38.8862 infer/sec, latency 25709 usec
 ```
-We see ``` 38.8862 infer/sec``` which is 81% faster then jit FP32 and 40% faster than TensorRT FP32 with static shape.
+We see ```38.8862 infer/sec``` which is 81% faster than jit FP32 and 40% faster than TensorRT FP32 with static shape.
+
+## ONNX backend in FP16 mode
+Let's try to analyze performance of onnx FP16 model.
+```bash
+$ perf_analyzer -m sifigan-onnx-fp16 --input-data measurement_data/real_data_fp16.json
+```
+We get following results
+```console
+ Successfully read data for 1 stream/streams with 1 step/steps.
+*** Measurement Settings ***
+  Batch size: 1
+  Service Kind: Triton
+  Using "time_windows" mode for stabilization
+  Measurement window: 5000 msec
+  Using synchronous calls for inference
+  Stabilizing using average latency
+
+Request concurrency: 1
+  Client:
+    Request count: 663
+    Throughput: 36.8306 infer/sec
+    Avg latency: 27156 usec (standard deviation 215 usec)
+    p50 latency: 27144 usec
+    p90 latency: 27416 usec
+    p95 latency: 27526 usec
+    p99 latency: 27732 usec
+    Avg HTTP time: 27149 usec (send/recv 198 usec + response wait 26951 usec)
+  Server:
+    Inference count: 663
+    Execution count: 663
+    Successful request count: 663
+    Avg request latency: 26014 usec (overhead 24 usec + queue 23 usec + compute input 196 usec + compute infer 25734 usec + compute output 37 usec)
+
+Inferences/Second vs. Client Average Batch Latency
+Concurrency: 1, throughput: 36.8306 infer/sec, latency 27156 usec
+```
+We see ```36.8306 infer/sec``` value and can conclude that onnx is slower than jit in the same mode. 
