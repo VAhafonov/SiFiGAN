@@ -1,14 +1,24 @@
 import argparse
 import time
+from typing import Tuple
 
 import torch
 
 from sifigan.models import SiFiGANGenerator
-from sifigan.nv_triton.misc.utils_funcs import remove_weight_norm, read_and_preprocess_test_tensors, parse_bool
+from sifigan.nv_triton.misc.utils_funcs import remove_weight_norm, parse_bool
 
 
-def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_path: str,
-                             use_dynamic_shape: bool = True, fp16: bool = False):
+def generate_random_tensor(fp16: bool) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    # shapes are hardcoded
+    tensor_dtype = torch.float16 if fp16 else torch.float32
+    in_signal = torch.rand((1, 1, 75240), device='cuda:0', dtype=tensor_dtype)
+    c = torch.rand((1, 43, 627), device='cuda:0', dtype=tensor_dtype)
+    dfs = torch.rand((1, 4, 75240), device='cuda:0', dtype=tensor_dtype)
+
+    return in_signal, c, dfs
+
+
+def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, use_dynamic_shape: bool = True, fp16: bool = False):
     model = SiFiGANGenerator(in_channels=43, out_channels=1, channels=512, kernel_size=7,
                              upsample_scales=[5, 4, 3, 2], upsample_kernel_sizes=[10, 8, 6, 4])
     state_dict = torch.load(checkpoint_path)
@@ -19,9 +29,7 @@ def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_p
     model.apply_layer_tweaks()
     if fp16:
         model = model.half()
-    input_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=False,
-                                                  do_convert_to_cuda=True, fp16=fp16)
-    in_signal, c, dfs = input_data
+    in_signal, c, dfs = generate_random_tensor(fp16)
 
     print("Start onnx export")
     start_time = time.time()
@@ -56,10 +64,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("chkp_path", type=str)
     parser.add_argument("save_path", type=str)
-    parser.add_argument("test_tensor_path", type=str)
     parser.add_argument("--use_dynamic_shape", type=str, default='true')
     parser.add_argument("--fp16", type=str, default='false')
     _args = parser.parse_args()
 
-    convert_and_save_as_onnx(_args.chkp_path, _args.save_path,
-                             _args.test_tensor_path, parse_bool(_args.use_dynamic_shape), parse_bool(_args.fp16))
+    convert_and_save_as_onnx(_args.chkp_path,
+                             _args.save_path,
+                             parse_bool(_args.use_dynamic_shape),
+                             parse_bool(_args.fp16))
