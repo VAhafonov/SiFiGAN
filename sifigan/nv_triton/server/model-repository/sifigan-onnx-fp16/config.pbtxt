@@ -1,0 +1,27 @@
+name: "sifigan-onnx-fp16"
+platform: "onnxruntime_onnx"
+max_batch_size: 1
+input[
+{
+    name: "INPUT__0"
+    data_type:  TYPE_FP16
+    dims: [1, -1]
+},
+{
+    name: "INPUT__1"
+    data_type:  TYPE_FP16
+    dims: [43, -1]
+},
+{
+    name: "INPUT__2"
+    data_type:  TYPE_FP16
+    dims: [4, -1]
+}
+]
+output:[
+{
+    name: "OUTPUT__0"
+    data_type:  TYPE_FP16
+    dims: [1, -1]
+}
+]
