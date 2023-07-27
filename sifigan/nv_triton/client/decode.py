@@ -99,28 +99,46 @@ def prepare_input_data(in_signal: np.ndarray,
     return in_signal, c, dfs
 
 
-def prepare_input_and_outputs_for_prediction(in_signal, c, dfs):
+def prepare_input_and_outputs_for_prediction(in_signal: np.ndarray, c: np.ndarray, dfs: np.ndarray, fp16: bool):
     # Infer
     inputs = []
     outputs = []
-    inputs.append(grpcclient.InferInput('INPUT__0', list(in_signal.shape), "FP32"))
-    inputs.append(grpcclient.InferInput('INPUT__1', list(c.shape), "FP32"))
-    inputs.append(grpcclient.InferInput('INPUT__2', list(dfs.shape), "FP32"))
+
+    if fp16:
+        str_type = "FP16"
+        np_dtype = np.float16
+    else:
+        str_type = "FP32"
+        np_dtype = np.float32
+
+    inputs.append(grpcclient.InferInput('INPUT__0', list(in_signal.shape), str_type))
+    inputs.append(grpcclient.InferInput('INPUT__1', list(c.shape), str_type))
+    inputs.append(grpcclient.InferInput('INPUT__2', list(dfs.shape), str_type))
 
     # Initialize the data
-    inputs[0].set_data_from_numpy(in_signal.astype(np.float32))
-    inputs[1].set_data_from_numpy(c.astype(np.float32))
-    inputs[2].set_data_from_numpy(dfs.astype(np.float32))
+    inputs[0].set_data_from_numpy(in_signal.astype(np_dtype))
+    inputs[1].set_data_from_numpy(c.astype(np_dtype))
+    inputs[2].set_data_from_numpy(dfs.astype(np_dtype))
 
     outputs.append(grpcclient.InferRequestedOutput('OUTPUT__0'))
 
     return inputs, outputs
 
 
+def is_fp16_model(model_name: str) -> bool:
+    if model_name.endswith('fp16'):
+        return True
+    else:
+        return False
+
+
 def decode_main(input_dir: str, output_dir: str, path_to_config: str, model_name: str) -> None:
     """Run decoding process."""
 
     config = read_yaml_config(path_to_config)
+
+    # check if fp16 or fp32
+    fp16 = is_fp16_model(model_name)
 
     # set up seed
     set_seed(int(config['seed']))
@@ -166,7 +184,7 @@ def decode_main(input_dir: str, output_dir: str, path_to_config: str, model_name
 
                 in_signal, c, dfs = prepare_input_data(in_signal, c, dfs)
 
-                inputs, outputs = prepare_input_and_outputs_for_prediction(in_signal, c, dfs)
+                inputs, outputs = prepare_input_and_outputs_for_prediction(in_signal, c, dfs, fp16)
 
                 # Test with outputs
                 start = time()
@@ -178,6 +196,8 @@ def decode_main(input_dir: str, output_dir: str, path_to_config: str, model_name
 
 
                 y = results.as_numpy('OUTPUT__0')
+                if fp16:
+                    y = y.astype(np.float32)
                 rtf = (time() - start) / (y.shape[-1] / data_config['sample_rate'])
                 pbar.set_postfix({"RTF": rtf})
                 total_rtf += rtf
@@ -199,7 +219,8 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output_dir", type=str, help="Path where extracted features will be located.")
     parser.add_argument("-c", "--path_to_config", type=str, default="configs/decode_default.yaml",
                         help="path to config with params related to feature extraction")
-    parser.add_argument("-m", "--model", choices=['sifigan-pt-fp32', 'sifigan-onnx-fp32'], help="choose model for inference")
+    parser.add_argument("-m", "--model", choices=['sifigan-pt-fp32', 'sifigan-onnx-fp32'],
+                        help="choose model for inference")
     args_ = parser.parse_args()
 
     decode_main(args_.input_dir, args_.output_dir, args_.path_to_config, args_.model)
