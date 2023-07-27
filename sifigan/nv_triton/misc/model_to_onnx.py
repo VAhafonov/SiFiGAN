@@ -8,8 +8,7 @@ from sifigan.nv_triton.misc.utils_funcs import remove_weight_norm, read_and_prep
 
 
 def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_path: str,
-                             use_dynamic_shape: bool = False):
-    # traced_model = convert_and_save_as_jit(checkpoint_path, save_path=None)
+                             use_dynamic_shape: bool = True, fp16: bool = False):
     model = SiFiGANGenerator(in_channels=43, out_channels=1, channels=512, kernel_size=7,
                              upsample_scales=[5, 4, 3, 2], upsample_kernel_sizes=[10, 8, 6, 4])
     state_dict = torch.load(checkpoint_path)
@@ -18,8 +17,10 @@ def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, test_tensor_p
     model.cuda()
     remove_weight_norm(model)
     model.apply_layer_tweaks()
+    if fp16:
+        model = model.half()
     input_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=False,
-                                                  do_convert_to_cuda=True)
+                                                  do_convert_to_cuda=True, fp16=fp16)
     in_signal, c, dfs = input_data
 
     print("Start onnx export")
@@ -57,7 +58,8 @@ if __name__ == "__main__":
     parser.add_argument("save_path", type=str)
     parser.add_argument("test_tensor_path", type=str)
     parser.add_argument("--use_dynamic_shape", type=str, default='true')
+    parser.add_argument("--fp16", type=str, default='false')
     _args = parser.parse_args()
 
     convert_and_save_as_onnx(_args.chkp_path, _args.save_path,
-                             _args.test_tensor_path, parse_bool(_args.use_dynamic_shape))
+                             _args.test_tensor_path, parse_bool(_args.use_dynamic_shape), parse_bool(_args.fp16))
