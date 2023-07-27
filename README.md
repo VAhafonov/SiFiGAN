@@ -1,14 +1,34 @@
 # Source-Filter HiFi-GAN (SiFi-GAN)
 
 This repo provides official PyTorch implementation of [SiFi-GAN](https://arxiv.org/abs/2210.15533), a fast and pitch controllable high-fidelity neural vocoder.<br>
-For more information, please see our [DEMO](https://chomeyama.github.io/SiFiGAN-Demo/).
+This repo also provides code and instruction to serve this model via Nvidia-Triton server
 
+# How to serve model via Nvidia-Triton
 ## Environment setup
 
+Install python dependencies.
 ```bash
-$ cd SiFiGAN
-$ pip install -e .
+cd SiFiGAN
+pip install -e .
 ```
+Install docker https://docs.docker.com/engine/install/ <br>
+Install nvidia container-toolkit https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+<br>
+
+## Prepare model for serving
+### Download pretrained checkpoint.
+At this example we will create new folder ```checkpoints``` at ```sifigan/nv_triton/misc``` 
+and download here pretrained checkpoint.
+```bash
+cd sifigan/nv_triton/misc
+mkdir checkpoints
+# donload model from dropbox
+wget -O checkpoint.pkl https://www.dropbox.com/s/w3pnnmpsxvqfykx/checkpoint-1000000steps.pkl?dl=0
+```
+
+### Prepare pretrained checkpoint for serving
+You can prepare only one type of model from this section and run serving for this model.
+But we will show you how to prepare all types of models
 
 Please refer to the [Parallel WaveGAN](https://github.com/kan-bayashi/ParallelWaveGAN) repo for more details.
 
