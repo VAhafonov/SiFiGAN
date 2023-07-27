@@ -1,12 +1,4 @@
 # -*- coding: utf-8 -*-
-
-"""Decoding Script for Source-Filter HiFiGAN.
-
-References:
-    - https://github.com/kan-bayashi/ParallelWaveGAN
-    - https://github.com/bigpon/QPPWG
-
-"""
 import argparse
 import os
 import sys
@@ -194,7 +186,6 @@ def decode_main(input_dir: str, output_dir: str, path_to_config: str, model_name
                                               headers={'test': '1'})
                 print("Prediction taken:", time() - start, "seconds")
 
-
                 y = results.as_numpy('OUTPUT__0')
                 if fp16:
                     y = y.astype(np.float32)
@@ -219,7 +210,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output_dir", type=str, help="Path where extracted features will be located.")
     parser.add_argument("-c", "--path_to_config", type=str, default="configs/decode_default.yaml",
                         help="path to config with params related to feature extraction")
-    parser.add_argument("-m", "--model", choices=['sifigan-pt-fp32', 'sifigan-onnx-fp32'],
+    parser.add_argument("-m", "--model", choices=['sifigan-pt-fp32', 'sifigan-onnx-fp32', 'sifigan-pt-fp16'],
                         help="choose model for inference")
     args_ = parser.parse_args()
 
