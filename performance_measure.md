@@ -1,10 +1,8 @@
 # Performance measure
-<br/>
 
-## Measure performance of baseline (not optimized) model
-### FP32 torchscript model
+## Metodology
 Steps to reproduce:
-1. Run nvidia triton server
+1. Run nvidia triton server from repo root dir
 ```console
 sudo docker run --gpus=1 --rm --net=host -p8000:8000 -p8001:8001 -p8002:8002 \ 
 -v ${PWD}/sifigan/nv_triton/server/model-repository:/models nvcr.io/nvidia/tritonserver:23.06-py3 tritonserver \ 
@@ -14,9 +12,16 @@ sudo docker run --gpus=1 --rm --net=host -p8000:8000 -p8001:8001 -p8002:8002 \
 2. Open new terminal to run performance analyzing request
 ```bash
 $ cd sifigan/nv_triton/client
+$ perf_analyzer -m <model-name> --input-data <path-to-file-with-real-data>
+```
+As file with real data for FP32 inference we will use ```measurement_data/real_data_fp32.json```.
+
+## Initial results
+Run this command.
+```bash
+$ cd sifigan/nv_triton/client
 $ perf_analyzer -m sifigan-pt-fp32 --input-data measurement_data/real_data_fp32.json
 ```
-## Initial results
 You will get output that looks like this
 ```console
 Successfully read data for 1 stream/streams with 1 step/steps.
@@ -57,6 +62,11 @@ repository.
 After tweak in architecture(get rid of ModuleNetInterface and index-based running of 
 nn.ModuleLists) from https://github.com/VAhafonov/SiFiGAN/commit/369bbfcdd1501e35b67fdaaf087f48195dfa4cf4 commit.
 </br>
+Run this command.
+```bash
+$ cd sifigan/nv_triton/client
+$ perf_analyzer -m sifigan-pt-fp32 --input-data measurement_data/real_data_fp32.json
+```
 We get following results
 ```console
 Successfully read data for 1 stream/streams with 1 step/steps.
