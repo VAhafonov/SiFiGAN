@@ -22,13 +22,92 @@ and download here pretrained checkpoint.
 ```bash
 cd sifigan/nv_triton/misc
 mkdir checkpoints
-# donload model from dropbox
+cd checkpoints
+# download model from dropbox
 wget -O checkpoint.pkl https://www.dropbox.com/s/w3pnnmpsxvqfykx/checkpoint-1000000steps.pkl?dl=0
+# go back to sifigan/nv_triton/misc dir
+cd ..
 ```
 
 ### Prepare pretrained checkpoint for serving
-You can prepare only one type of model from this section and run serving for this model.
-But we will show you how to prepare all types of models
+You can prepare any type of model from this section and run serving for this model. <br>
+You should run following scripts from ```sifigan/nv_triton/misc``` dir.
+
+#### Prepare JIT FP32 model
+```bash
+python3 model_to_jit.py checkpoints/checkpoint.pkl ../server/sifigan-pt-fp32/1/model.pt
+```
+`checkpoints/checkpoint.pkl` is input checkpoint path <br>
+`../server/sifigan-pt-fp32/1/model.pt` is output path for compiled jit FP32 model
+
+#### Prepare JIT FP16 model
+```bash
+python3 model_to_jit.py checkpoints/checkpoint.pkl ../server/sifigan-pt-fp16/1/model.pt --fp16=true
+```
+`checkpoints/checkpoint.pkl` is input checkpoint path <br>
+`../server/sifigan-pt-fp16/1/model.pt` is output path for compiled jit FP16 model <br>
+`--fp16=true` indicates that we need model in FP16 precision
+
+#### Prepare ONNX FP32 model
+```bash
+python3 model_to_onnx.py checkpoints/checkpoint.pkl ../server/sifigan-onnx-fp32/1/model.onnx
+```
+`checkpoints/checkpoint.pkl` is input checkpoint path <br>
+`../server/sifigan-onnx-fp32/1/model.onnx` is output path for onnx FP32 model
+
+#### Prepare ONNX FP16 model
+```bash
+python3 model_to_onnx.py checkpoints/checkpoint.pkl ../server/sifigan-onnx-fp16/1/model.onnx --fp16=true
+```
+`checkpoints/checkpoint.pkl` is input checkpoint path <br>
+`../server/sifigan-onnx-fp16/1/model.onnx` is output path for onnx FP16 model<br>
+`--fp16=true` indicates that we need model in FP16 precision
+<br>
+<br>
+
+**WARNING!**  Section related to TensorRT generation are completely optional. <br>
+Currently decoding via TensorRT models is not supported, because TensorRT works only with static shapes.
+But TensorRT models could be used for performance analyze. <br>
+**IMPORTANT!** In order to generate TensorRT models you have to install TensorRT.
+
+#### Prepare TensorRT FP32 model
+```bash
+# generate onnx model with static shape
+python3 model_to_onnx.py checkpoints/checkpoint.pkl checkpoints/model.onnx --use_dynamic_shape=false
+# generate TensorRT plan from onnx and put it in right place
+python3 onnx_to_tensorrt.py checkpoints/model.onnx ../server/sifigan-trt-fp32/1/model.plan
+```
+
+#### Prepare TensorRT FP16 model
+```bash
+# generate onnx model with static shape
+python3 model_to_onnx.py checkpoints/checkpoint.pkl checkpoints/model.onnx --use_dynamic_shape=false --fp16=true
+# generate TensorRT plan from onnx and put it in right place
+python3 onnx_to_tensorrt.py checkpoints/model.onnx ../server/sifigan-trt-fp16/1/model.plan --fp16=true
+```
+<br>
+
+### Run Nvidia-Triton inference server
+To run Nvidia-Triton inference server you should go back to **root directory of the repo** and 
+run following command
+```bash
+sudo docker run --gpus=1 --rm --net=host -p8000:8000 -p8001:8001 -p8002:8002 \
+-v ${PWD}/sifigan/nv_triton/server/model-repository:/models \ 
+nvcr.io/nvidia/tritonserver:23.06-py3 tritonserver --model-repository=/models
+```
+You should see following three lines at the end of the previous command output.
+```console
+Started GRPCInferenceService at 0.0.0.0:8001
+Started HTTPService at 0.0.0.0:8000
+Started Metrics Service at 0.0.0.0:8002
+```
+This output means that nvidia-triton server is running and you can make inference requests to it.
+
+
+
+
+
+
 
 Please refer to the [Parallel WaveGAN](https://github.com/kan-bayashi/ParallelWaveGAN) repo for more details.
 
