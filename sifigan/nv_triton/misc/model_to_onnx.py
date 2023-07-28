@@ -5,7 +5,7 @@ from typing import Tuple
 import torch
 
 from sifigan.models import SiFiGANGenerator
-from sifigan.nv_triton.misc.utils_funcs import remove_weight_norm, parse_bool
+from sifigan.nv_triton.misc.utils_funcs import remove_weight_norm, parse_bool, read_and_preprocess_test_tensors
 
 
 def generate_random_tensor(fp16: bool) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -18,7 +18,8 @@ def generate_random_tensor(fp16: bool) -> Tuple[torch.Tensor, torch.Tensor, torc
     return in_signal, c, dfs
 
 
-def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, use_dynamic_shape: bool = True, fp16: bool = False):
+def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, use_dynamic_shape: bool = True, fp16: bool = False,
+                             test_tensor_path: str = ''):
     model = SiFiGANGenerator(in_channels=43, out_channels=1, channels=512, kernel_size=7,
                              upsample_scales=[5, 4, 3, 2], upsample_kernel_sizes=[10, 8, 6, 4])
     state_dict = torch.load(checkpoint_path)
@@ -30,6 +31,10 @@ def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, use_dynamic_s
     if fp16:
         model = model.half()
     in_signal, c, dfs = generate_random_tensor(fp16)
+
+    input_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=False,
+                                                  do_convert_to_cuda=True, fp16=fp16)
+    in_signal, c, dfs = input_data
 
     print("Start onnx export")
     start_time = time.time()
@@ -66,9 +71,11 @@ if __name__ == "__main__":
     parser.add_argument("save_path", type=str)
     parser.add_argument("--use_dynamic_shape", type=str, default='true')
     parser.add_argument("--fp16", type=str, default='false')
+    parser.add_argument("test_tensor_path", type=str)
     _args = parser.parse_args()
 
     convert_and_save_as_onnx(_args.chkp_path,
                              _args.save_path,
                              parse_bool(_args.use_dynamic_shape),
-                             parse_bool(_args.fp16))
+                             parse_bool(_args.fp16),
+                             _args.test_tensor_path)
