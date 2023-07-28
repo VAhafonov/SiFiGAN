@@ -35,32 +35,42 @@ You should run following scripts from ```sifigan/nv_triton/misc``` dir.
 
 #### Prepare JIT FP32 model
 ```bash
-python3 model_to_jit.py checkpoints/checkpoint.pkl ../server/sifigan-pt-fp32/1/model.pt
+python3 model_to_jit.py checkpoints/checkpoint.pkl ../server/model-repository/sifigan-pt-fp32/1/model.pt
 ```
 `checkpoints/checkpoint.pkl` is input checkpoint path <br>
-`../server/sifigan-pt-fp32/1/model.pt` is output path for compiled jit FP32 model
+`../server/model-repository/sifigan-pt-fp32/1/model.pt` is output path for compiled jit FP32 model
 
 #### Prepare JIT FP16 model
 ```bash
-python3 model_to_jit.py checkpoints/checkpoint.pkl ../server/sifigan-pt-fp16/1/model.pt --fp16=true
+python3 model_to_jit.py checkpoints/checkpoint.pkl ../server/model-repository/sifigan-pt-fp16/1/model.pt --fp16=true
 ```
 `checkpoints/checkpoint.pkl` is input checkpoint path <br>
-`../server/sifigan-pt-fp16/1/model.pt` is output path for compiled jit FP16 model <br>
+`../server/model-repository/sifigan-pt-fp16/1/model.pt` is output path for compiled jit FP16 model <br>
 `--fp16=true` indicates that we need model in FP16 precision
 
 #### Prepare ONNX FP32 model
+For ONNX generation you need example of real input. You can download it from Dropbox.
+
 ```bash
-python3 model_to_onnx.py checkpoints/checkpoint.pkl ../server/sifigan-onnx-fp32/1/model.onnx
+wget -O checkpoints/test_tensor.pth https://www.dropbox.com/s/8ccrv26a2t8fed9/test_tensor.pth?dl=0
+```
+Run onnx generation
+```bash
+python3 model_to_onnx.py checkpoints/checkpoint.pkl ../server/model-repository/sifigan-onnx-fp32/1/model.onnx \
+checkpoints/test_tensor.pth
 ```
 `checkpoints/checkpoint.pkl` is input checkpoint path <br>
-`../server/sifigan-onnx-fp32/1/model.onnx` is output path for onnx FP32 model
+`../server/model-repository/sifigan-onnx-fp32/1/model.onnx` is output path for onnx FP32 model
+`checkpoints/test_tensor.pth` - path to the example input for the network
 
 #### Prepare ONNX FP16 model
 ```bash
-python3 model_to_onnx.py checkpoints/checkpoint.pkl ../server/sifigan-onnx-fp16/1/model.onnx --fp16=true
+python3 model_to_onnx.py checkpoints/checkpoint.pkl ../server/model-repository/sifigan-onnx-fp16/1/model.onnx \
+checkpoints/test_tensor.pth --fp16=true
 ```
 `checkpoints/checkpoint.pkl` is input checkpoint path <br>
-`../server/sifigan-onnx-fp16/1/model.onnx` is output path for onnx FP16 model<br>
+`../server/model-repository/sifigan-onnx-fp16/1/model.onnx` is output path for onnx FP16 model<br>
+`checkpoints/test_tensor.pth` - path to the example input for the network <br>
 `--fp16=true` indicates that we need model in FP16 precision
 <br>
 <br>
@@ -73,17 +83,17 @@ But TensorRT models could be used for performance analyze. <br>
 #### Prepare TensorRT FP32 model
 ```bash
 # generate onnx model with static shape
-python3 model_to_onnx.py checkpoints/checkpoint.pkl checkpoints/model.onnx --use_dynamic_shape=false
+python3 model_to_onnx.py checkpoints/checkpoint.pkl checkpoints/model.onnx checkpoints/test_tensor.pth --use_dynamic_shape=false
 # generate TensorRT plan from onnx and put it in right place
-python3 onnx_to_tensorrt.py checkpoints/model.onnx ../server/sifigan-trt-fp32/1/model.plan
+python3 onnx_to_tensorrt.py checkpoints/model.onnx ../server/model-repository/sifigan-trt-fp32/1/model.plan
 ```
 
 #### Prepare TensorRT FP16 model
 ```bash
 # generate onnx model with static shape
-python3 model_to_onnx.py checkpoints/checkpoint.pkl checkpoints/model.onnx --use_dynamic_shape=false --fp16=true
+python3 model_to_onnx.py checkpoints/checkpoint.pkl checkpoints/model.onnx checkpoints/test_tensor.pth --use_dynamic_shape=false --fp16=true
 # generate TensorRT plan from onnx and put it in right place
-python3 onnx_to_tensorrt.py checkpoints/model.onnx ../server/sifigan-trt-fp16/1/model.plan --fp16=true
+python3 onnx_to_tensorrt.py checkpoints/model.onnx ../server/model-repository/sifigan-trt-fp16/1/model.plan --fp16=true
 ```
 <br>
 
@@ -92,7 +102,7 @@ To run Nvidia-Triton inference server you should go back to **root directory of 
 run following command
 ```bash
 sudo docker run --gpus=1 --rm --net=host -p8000:8000 -p8001:8001 -p8002:8002 \
--v ${PWD}/sifigan/nv_triton/server/model-repository:/models \ 
+-v ${PWD}/sifigan/nv_triton/server/model-repository:/models \
 nvcr.io/nvidia/tritonserver:23.06-py3 tritonserver --model-repository=/models
 ```
 You should see following three lines at the end of the previous command output.
@@ -137,7 +147,7 @@ config file. You can modify it or even create your own config file and pass path
 #### Run vocoding
 To run vocoding from features extracted on previous step, using Sifi GAN you should use `decode.py` script.
 ```bash
-python3 decode.py input_dir=data/features --output_dir=data/out --model=sifigan-pt-fp32
+python3 decode.py --input_dir=data/features --output_dir=data/out --model=sifigan-pt-fp32
 ```
 It will take all extracted features from `--input_dir` do vocoding for each of them and save resulting sound files 
 into `--output_dir`. <br>
