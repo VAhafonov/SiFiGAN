@@ -31,10 +31,18 @@ def convert_and_save_as_onnx(checkpoint_path: str, save_path: str, use_dynamic_s
     if fp16:
         model = model.half()
     in_signal, c, dfs = generate_random_tensor(fp16)
+    print("Random tensors")
+    print("In_signal shape:", in_signal.shape, "dtype:", in_signal.dtype, "device:", in_signal.device)
+    print("c shape:", c.shape, "dtype:", c.dtype, "device:", c.device)
+    print("dfs shape:", dfs.shape, "dtype:", dfs.dtype, "device:", dfs.device)
 
     input_data = read_and_preprocess_test_tensors(test_tensor_path, do_read_output_tensor=False,
                                                   do_convert_to_cuda=True, fp16=fp16)
     in_signal, c, dfs = input_data
+    print("Tensor from file")
+    print("In_signal shape:", in_signal.shape, "dtype:", in_signal.dtype, "device:", in_signal.device)
+    print("c shape:", c.shape, "dtype:", c.dtype, "device:", c.device)
+    print("dfs shape:", dfs.shape, "dtype:", dfs.dtype, "device:", dfs.device)
 
     print("Start onnx export")
     start_time = time.time()
