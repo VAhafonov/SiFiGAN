@@ -13,10 +13,13 @@ References:
 """
 
 from logging import getLogger
+from typing import List, Tuple
 
+import numpy as np
 import torch
 import torch.nn as nn
 from sifigan.layers import AdaptiveResidualBlock, Conv1d, ResidualBlock
+from sifigan.layers.layers_for_inference import FilterNetwork
 
 # A logger for this file
 logger = getLogger(__name__)
@@ -263,7 +266,7 @@ class SiFiGANGenerator(nn.Module):
         upsample_kernel_sizes=(10, 8, 6, 4),
         source_network_params={
             "resblock_kernel_size": 3,  # currently only 3 is supported.
-            "resblock_dilations": [(1), (1, 2), (1, 2, 4), (1, 2, 4, 8)],
+            "resblock_dilations": [[1], [1, 2], [1, 2, 4], [1, 2, 4, 8]],
             "use_additional_convs": True,
         },
         filter_network_params={
@@ -302,11 +305,13 @@ class SiFiGANGenerator(nn.Module):
         # check hyperparameters are valid
         assert kernel_size % 2 == 1, "Kernel size must be odd number."
         assert len(upsample_scales) == len(upsample_kernel_sizes)
+        self.rates = torch.from_numpy(np.cumprod(upsample_scales))
 
         # define modules
         self.num_upsamples = len(upsample_kernel_sizes)
         self.source_network_params = source_network_params
         self.filter_network_params = filter_network_params
+        self.num_proc_blocks = len(filter_network_params["resblock_kernel_sizes"])
         self.share_upsamples = share_upsamples
         self.share_downsamples = share_downsamples
         self.sn = nn.ModuleDict()
@@ -446,7 +451,7 @@ class SiFiGANGenerator(nn.Module):
         # reset parameters
         self.reset_parameters()
 
-    def forward(self, x, c, d):
+    def forward(self, x: torch.Tensor, c: torch.Tensor, d: torch.Tensor) -> torch.Tensor:
         """Calculate forward propagation.
 
         Args:
@@ -458,6 +463,11 @@ class SiFiGANGenerator(nn.Module):
             Tensor: Output tensor (B, out_channels, T).
 
         """
+        # process offsets
+        d_list = []
+        for idx in range(self.num_upsamples):
+            d_list.append(d[:, idx, :c.shape[-1] * self.rates[idx]])
+        d = d_list
         # currently, same input feature is input to each network
         c = self.input_conv(c)
         e = c
@@ -465,37 +475,39 @@ class SiFiGANGenerator(nn.Module):
         # source-network forward
         x = self.sn["emb"](x)
         embs = [x]
-        for i in range(self.num_upsamples - 1):
-            x = self.sn["downsamples"][i](x)
+        for i, down_layer in enumerate(self.sn['downsamples']):
+            x = down_layer(x)
             embs += [x]
-        for i in range(self.num_upsamples):
+        for i, (layer_block, layer_up) in enumerate(zip(self.sn["blocks"], self.sn["upsamples"])):
             # excitation generation network
-            e = self.sn["upsamples"][i](e) + embs[-i - 1]
-            e = self.sn["blocks"][i](e, d[i])
-        e_ = self.sn["output_conv"](e)
+            e = layer_up(e) + embs[-i - 1]
+            e = layer_block(e, d[i])
+        # e_ = self.sn["output_conv"](e)
 
         # filter-network forward
-        embs = [e]
-        for i in range(self.num_upsamples - 1):
-            if self.share_downsamples:
-                e = self.sn["downsamples"][i](e)
-            else:
-                e = self.fn["downsamples"][i](e)
+        embs: List[torch.Tensor] = [e]
+        for i, layer_down in enumerate(self.fn["downsamples"]):
+            # if self.share_downsamples:
+            #     e = self.sn["downsamples"][i](e)
+            # else:
+            e = layer_down(e)
             embs += [e]
-        num_blocks = len(self.filter_network_params["resblock_kernel_sizes"])
-        for i in range(self.num_upsamples):
-            # resonance filtering network
-            if self.share_upsamples:
-                c = self.sn["upsamples"][i](c) + embs[-i - 1]
-            else:
-                c = self.fn["upsamples"][i](c) + embs[-i - 1]
-            cs = 0.0  # initialize
-            for j in range(num_blocks):
-                cs += self.fn["blocks"][i * num_blocks + j](c)
-            c = cs / num_blocks
+        assert len(embs) == 4
+        input: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor] = (c, embs[0], embs[1], embs[2], embs[3])
+        c = self.fn["blocks"].forward(input)
+        # for i, (fn_up_layer, module_list_block) in enumerate(zip(self.fn["upsamples"], self.fn["blocks"])):
+        #     # resonance filtering network
+        #     # if self.share_upsamples:
+        #     #     c = self.sn["upsamples"][i](c) + embs[-i - 1]
+        #     # else:
+        #     c = fn_up_layer(c) + embs[-i - 1]
+        #     cs = torch.zeros(c.shape, dtype=c.dtype, device=c.device)  # initialize
+        #     for j, fn_block in enumerate(module_list_block):
+        #         cs += fn_block(c)
+        #     c = cs / self.num_proc_blocks
         c = self.fn["output_conv"](c)
 
-        return c, e_
+        return c #, e_
 
     def reset_parameters(self):
         """Reset parameters.
@@ -511,6 +523,27 @@ class SiFiGANGenerator(nn.Module):
                 logger.debug(f"Reset parameters in {m}.")
 
         self.apply(_reset_parameters)
+
+    def apply_layer_tweaks(self):
+        self.sn["downsamples"] = self.sn["downsamples"][:-1]
+
+        self.fn["downsamples"] = self.fn["downsamples"][:-1]
+        module_list = []
+        for i in range(self.num_upsamples):
+            module_list.append(self.fn["blocks"][i * self.num_proc_blocks:(i + 1) * self.num_proc_blocks])
+        filter_network = FilterNetwork(first_upsample=self.fn["upsamples"][0],
+                                       second_upsample=self.fn["upsamples"][1],
+                                       third_upsample=self.fn["upsamples"][2],
+                                       fourth_upsample=self.fn["upsamples"][3],
+                                       first_process_block=module_list[0],
+                                       second_process_block=module_list[1],
+                                       third_process_block=module_list[2],
+                                       fourth_process_block=module_list[3]
+                                       )
+
+        self.fn["blocks"] = filter_network
+        del self.fn["upsamples"]
+
 
     def remove_weight_norm(self):
         """Remove weight normalization module from all of the layers."""

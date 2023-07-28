@@ -19,7 +19,7 @@ import numpy as np
 import soundfile as sf
 from hydra.utils import to_absolute_path
 from joblib import load
-from sifigan.utils import check_filename, read_hdf5, read_txt, validate_length
+from sifigan.utils import check_filename, read_hdf5, read_txt, validate_length, get_all_files_from_dir
 from torch.utils.data import Dataset
 
 # A logger for this file
@@ -190,7 +190,7 @@ class FeatDataset(Dataset):
     def __init__(
         self,
         stats,
-        feat_list,
+        feat_list: str or None,
         feat_length_threshold=None,
         return_filename=False,
         allow_cache=False,
@@ -198,6 +198,7 @@ class FeatDataset(Dataset):
         hop_size=120,
         aux_feats=["mcep", "bap"],
         f0_factor=1.0,
+        input_dir: str or None = None,
     ):
         """Initialize dataset.
 
@@ -211,10 +212,16 @@ class FeatDataset(Dataset):
             hop_size (int): Hope size of acoustic feature
             aux_feats (str): Type of auxiliary features.
             f0_factor (float): Ratio of scaled f0.
+            input_dir (str or None): Path to dir with input data
 
         """
         # load feat. files
-        feat_files = read_txt(to_absolute_path(feat_list))
+        if feat_list is not None:
+            feat_files = read_txt(to_absolute_path(feat_list))
+        else:
+            assert input_dir is not None
+            # read all files from dir directly
+            feat_files = get_all_files_from_dir(input_dir)
 
         # filter by threshold
         if feat_length_threshold is not None:
@@ -234,7 +241,7 @@ class FeatDataset(Dataset):
             feat_files = [feat_files[idx] for idx in idxs]
 
         # assert the number of files
-        assert len(feat_files) != 0, f"${feat_list} is empty."
+        assert len(feat_files) != 0, f"$there are no input files"
 
         self.feat_files = feat_files
         self.return_filename = return_filename

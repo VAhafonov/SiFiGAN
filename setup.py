@@ -36,6 +36,9 @@ requirements = {
         "sprocket-vc",
         "protobuf<=3.19.0",
         "hydra-core>=1.2",
+        "onnx>=1.14.0",
+        "onnxruntime>=1.15.1",
+        "tritonclient[all]",
     ],
     "setup": [
         "numpy",

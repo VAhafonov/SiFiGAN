@@ -4,11 +4,12 @@
 #  MIT License (https://opensource.org/licenses/MIT)
 
 """Indexing-related functions."""
+from typing import List
 
 import torch
 
 
-def pd_indexing(x, d, dilation, batch_index, ch_index):
+def pd_indexing(x: torch.Tensor, d: torch.Tensor, dilation: int):
     """Pitch-dependent indexing of past and future samples.
 
     Args:
@@ -33,13 +34,17 @@ def pd_indexing(x, d, dilation, batch_index, ch_index):
     idxP = (idx_base - dilations).abs() % T
     idxP = (batch_index, ch_index, idxP)
 
+    index_xp = x[idxP[0][0, 0, 0]][idxP[1][0, :, 0]][:, idxP[2][0, 0, :]]
+
     # get future index (assume reflect padding)
     idxF = idx_base + dilations
     overflowed = idxF >= T
     idxF[overflowed] = -(idxF[overflowed] % T)
     idxF = (batch_index, ch_index, idxF)
 
-    return x[idxP], x[idxF]
+    index_xf = x[idxF[0][0, 0, 0]][idxF[1][0, :, 0]][:, idxF[2][0, 0, :]]
+
+    return index_xp, index_xf
 
 
 def index_initial(n_batch, n_ch, tensor=True):
@@ -69,4 +74,31 @@ def index_initial(n_batch, n_ch, tensor=True):
         if torch.cuda.is_available():
             batch_index = batch_index.cuda()
             ch_index = ch_index.cuda()
+    return batch_index, ch_index
+
+
+def index_initial_for_jit(n_batch: int, n_ch: int):
+    """Tensor batch and channel index initialization.
+
+    Args:
+        n_batch (Int): Number of batch.
+        n_ch (Int): Number of channel.
+        tensor (bool): Return tensor or numpy array
+
+    Returns:
+        Tensor: Batch index
+        Tensor: Channel index
+
+    """
+    assert isinstance(n_ch, int)
+    assert isinstance(n_batch, int)
+    batch_index = []
+    for i in torch.arange(n_batch):
+        batch_index.append(torch.full([1, n_ch, 1], fill_value=i, dtype=torch.int64, device='cpu'))
+    batch_index = torch.cat(batch_index, dim=0)
+
+    ch_index = torch.unsqueeze(torch.unsqueeze(torch.arange(0, n_ch, dtype=torch.int64, device='cpu'), dim=0), dim=-1)
+    if n_batch != 1:
+        ch_index = torch.cat([ch_index * n_batch], dim=0)
+
     return batch_index, ch_index

@@ -17,7 +17,7 @@ from logging import getLogger
 import torch
 import torch.nn as nn
 from sifigan.layers import Snake
-from sifigan.utils import index_initial, pd_indexing
+from sifigan.utils import index_initial, pd_indexing, index_initial_for_jit
 
 # A logger for this file
 logger = getLogger(__name__)
@@ -139,7 +139,7 @@ class ResidualBlock(nn.Module):
                     )
                 ]
 
-    def forward(self, x):
+    def forward(self, input: torch.Tensor):
         """Calculate forward propagation.
 
         Args:
@@ -149,12 +149,13 @@ class ResidualBlock(nn.Module):
             Tensor: Output tensor (B, channels, T).
 
         """
-        for idx in range(len(self.convs1)):
-            xt = self.convs1[idx](x)
-            if self.use_additional_convs:
-                xt = self.convs2[idx](xt)
-            x = xt + x
-        return x
+        for idx, layer in enumerate(self.convs1):
+            xt = layer(input)
+            # if self.use_additional_convs:
+            #     submodule1: ModuleInterface = self.convs2[idx]
+            #     xt = submodule1.forward(xt)
+            input = xt + input
+        return input
 
 
 class AdaptiveResidualBlock(nn.Module):
@@ -247,12 +248,21 @@ class AdaptiveResidualBlock(nn.Module):
             Tensor: Output tensor (B, channels, T).
 
         """
-        batch_index, ch_index = index_initial(x.size(0), self.channels)
-        for i, dilation in enumerate(self.dilations):
-            xt = self.nonlinears[i](x)
-            xP, xF = pd_indexing(xt, d, dilation, batch_index, ch_index)
-            xt = self.convsC[i](xt) + self.convsP[i](xP) + self.convsF[i](xF)
+        for i, (nonlin_layer, convsc_layer, convsp_layer, convsf_layer, convsa_layer) in enumerate(zip(self.nonlinears,
+                                                                                                       self.convsC,
+                                                                                                       self.convsP,
+                                                                                                       self.convsF,
+                                                                                                       self.convsA)):
+            assert isinstance(i, int)
+            xt = nonlin_layer(x)
+
+            dilation = self.dilations[i]
+            assert isinstance(dilation, int)
+            xP, xF = pd_indexing(xt, d, dilation)
+
+            xt = convsc_layer(xt) + convsp_layer(xP) + convsf_layer(xF)
+
             if self.use_additional_convs:
-                xt = self.convsA[i](xt)
+                xt = convsa_layer(xt)
             x = xt + x
         return x
