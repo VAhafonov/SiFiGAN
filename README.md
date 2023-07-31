@@ -80,6 +80,19 @@ Currently decoding via TensorRT models is not supported, because TensorRT works 
 But TensorRT models could be used for performance analyze. <br>
 **IMPORTANT!** In order to generate TensorRT models you have to install TensorRT.
 
+####  Preparation step
+First of all copy model configs for trt models to nvidia-triton model-repository
+```bash
+cp -r trt-models-conifgs/* ../server/model-repository/
+```
+
+**IMPORTANT!** If you stumbled upon an error during generation of TensorRT models, and after that you do not plan 
+to use these models then clean the directory:
+```bash
+rm -rf ../server/model-repository/sifigan-trt-fp32
+rm -rf ../server/model-repository/sifigan-trt-fp16
+```
+
 #### Prepare TensorRT FP32 model
 ```bash
 # generate onnx model with static shape
@@ -90,9 +103,9 @@ python3 onnx_to_tensorrt.py checkpoints/model.onnx ../server/model-repository/si
 
 #### Prepare TensorRT FP16 model
 ```bash
-# generate onnx model with static shape
+# generate onnx model with static shape in FP16 mode
 python3 model_to_onnx.py checkpoints/checkpoint.pkl checkpoints/model.onnx checkpoints/test_tensor.pth --use_dynamic_shape=false --fp16=true
-# generate TensorRT plan from onnx and put it in right place
+# generate TensorRT plan from onnx in FP16 mode and put it in right place
 python3 onnx_to_tensorrt.py checkpoints/model.onnx ../server/model-repository/sifigan-trt-fp16/1/model.plan --fp16=true
 ```
 <br>
